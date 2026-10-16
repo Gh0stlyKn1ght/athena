@@ -1,0 +1,74 @@
+[
+  {
+    "owner_repo": "NVIDIA/cuda-python",
+    "url": "https://github.com/NVIDIA/cuda-python",
+    "primary_language": "Python",
+    "stars_at_collection": 1400,
+    "license": "Apache-2.0",
+    "selection_reason": "NVIDIA official Python bindings for CUDA driver and runtime APIs",
+    "applicable_capabilities": ["inspect", "commits", "diff", "python_ast", "breaking_changes", "release_notes"]
+  },
+  {
+    "owner_repo": "goldmansachs/gs-quant",
+    "url": "https://github.com/goldmansachs/gs-quant",
+    "primary_language": "Python",
+    "stars_at_collection": 2900,
+    "license": "Apache-2.0",
+    "selection_reason": "Goldman Sachs official quantitative finance Python SDK",
+    "applicable_capabilities": ["inspect", "commits", "diff", "python_ast", "breaking_changes", "release_notes"]
+  },
+  {
+    "owner_repo": "psf/requests",
+    "url": "https://github.com/psf/requests",
+    "primary_language": "Python",
+    "stars_at_collection": 52000,
+    "license": "Apache-2.0",
+    "selection_reason": "Standard Python HTTP client (>10k stars, 50k+ stars)",
+    "applicable_capabilities": ["inspect", "commits", "diff", "python_ast", "breaking_changes", "release_notes"]
+  },
+  {
+    "owner_repo": "pallets/flask",
+    "url": "https://github.com/pallets/flask",
+    "primary_language": "Python",
+    "stars_at_collection": 68000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Standard Python web microframework (>10k stars, 68k+ stars)",
+    "applicable_capabilities": ["inspect", "commits", "diff", "python_ast", "breaking_changes", "release_notes"]
+  },
+  {
+    "owner_repo": "axios/axios",
+    "url": "https://github.com/axios/axios",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 105000,
+    "license": "MIT",
+    "selection_reason": "Most popular JavaScript/TypeScript HTTP client (>10k stars, 105k+ stars)",
+    "applicable_capabilities": ["inspect", "commits", "diff", "ts_structural", "release_notes"]
+  },
+  {
+    "owner_repo": "cli/cli",
+    "url": "https://github.com/cli/cli",
+    "primary_language": "Go",
+    "stars_at_collection": 37000,
+    "license": "MIT",
+    "selection_reason": "Official GitHub CLI (>10k stars, Go language coverage)",
+    "applicable_capabilities": ["inspect", "commits", "diff", "release_notes"]
+  },
+  {
+    "owner_repo": "astral-sh/ruff",
+    "url": "https://github.com/astral-sh/ruff",
+    "primary_language": "Rust",
+    "stars_at_collection": 35000,
+    "license": "MIT",
+    "selection_reason": "Fast Rust-based Python linter and formatter (>10k stars, Rust coverage)",
+    "applicable_capabilities": ["inspect", "commits", "diff", "release_notes"]
+  },
+  {
+    "owner_repo": "finos/perspective",
+    "url": "https://github.com/finos/perspective",
+    "primary_language": "C++",
+    "stars_at_collection": 6300,
+    "license": "Apache-2.0",
+    "selection_reason": "FINOS streaming data analytics visualization engine (ex-JPMorgan, C++/TS)",
+    "applicable_capabilities": ["inspect", "commits", "diff", "ts_structural", "release_notes"]
+  }
+]

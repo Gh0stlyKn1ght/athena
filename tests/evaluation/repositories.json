@@ -1,0 +1,2730 @@
+[
+  {
+    "owner_repo": "NVIDIA/cuda-python",
+    "url": "https://github.com/NVIDIA/cuda-python",
+    "primary_language": "Python",
+    "stars_at_collection": 1400,
+    "license": "Apache-2.0",
+    "selection_reason": "NVIDIA official Python bindings for CUDA driver and runtime APIs",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "NVIDIA/NeMo",
+    "url": "https://github.com/NVIDIA/NeMo",
+    "primary_language": "Python",
+    "stars_at_collection": 12800,
+    "license": "Apache-2.0",
+    "selection_reason": "NVIDIA conversational AI and LLM framework (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "NVIDIA/apex",
+    "url": "https://github.com/NVIDIA/apex",
+    "primary_language": "Python",
+    "stars_at_collection": 9300,
+    "license": "BSD-3-Clause",
+    "selection_reason": "NVIDIA PyTorch mixed precision extensions with deep C++/Python boundaries",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "NVIDIA/cutlass",
+    "url": "https://github.com/NVIDIA/cutlass",
+    "primary_language": "C++",
+    "stars_at_collection": 6700,
+    "license": "BSD-3-Clause",
+    "selection_reason": "NVIDIA high-performance CUDA C++ GEMM template library",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "NVIDIA/DALI",
+    "url": "https://github.com/NVIDIA/DALI",
+    "primary_language": "C++",
+    "stars_at_collection": 4700,
+    "license": "Apache-2.0",
+    "selection_reason": "NVIDIA GPU-accelerated data loading library",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "goldmansachs/gs-quant",
+    "url": "https://github.com/goldmansachs/gs-quant",
+    "primary_language": "Python",
+    "stars_at_collection": 2900,
+    "license": "Apache-2.0",
+    "selection_reason": "Goldman Sachs official quantitative finance Python SDK",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "finos/perspective",
+    "url": "https://github.com/finos/perspective",
+    "primary_language": "C++",
+    "stars_at_collection": 6300,
+    "license": "Apache-2.0",
+    "selection_reason": "FINOS streaming data analytics visualization engine (ex-JPMorgan)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "finos/legend",
+    "url": "https://github.com/finos/legend",
+    "primary_language": "Java",
+    "stars_at_collection": 1100,
+    "license": "Apache-2.0",
+    "selection_reason": "FINOS data modeling and governance platform (contributed by Goldman Sachs)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "bloomberg/blpapi-python",
+    "url": "https://github.com/bloomberg/blpapi-python",
+    "primary_language": "Python",
+    "stars_at_collection": 550,
+    "license": "MIT",
+    "selection_reason": "Bloomberg official Python API library for financial data services",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "bloomberg/bde",
+    "url": "https://github.com/bloomberg/bde",
+    "primary_language": "C++",
+    "stars_at_collection": 1400,
+    "license": "Apache-2.0",
+    "selection_reason": "Bloomberg enterprise foundational C++ software libraries",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "microsoft/TypeScript",
+    "url": "https://github.com/microsoft/TypeScript",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 104000,
+    "license": "Apache-2.0",
+    "selection_reason": "Microsoft TypeScript language compiler (>100k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "microsoft/vscode",
+    "url": "https://github.com/microsoft/vscode",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 165000,
+    "license": "MIT",
+    "selection_reason": "Microsoft VS Code editor (>160k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "microsoft/playwright",
+    "url": "https://github.com/microsoft/playwright",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 69000,
+    "license": "Apache-2.0",
+    "selection_reason": "Microsoft end-to-end testing framework (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "microsoft/pyright",
+    "url": "https://github.com/microsoft/pyright",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 14200,
+    "license": "MIT",
+    "selection_reason": "Microsoft static type checker for Python (>14k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "microsoft/terminal",
+    "url": "https://github.com/microsoft/terminal",
+    "primary_language": "C++",
+    "stars_at_collection": 95000,
+    "license": "MIT",
+    "selection_reason": "Windows Terminal open-source codebase (>90k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "google/jax",
+    "url": "https://github.com/google/jax",
+    "primary_language": "Python",
+    "stars_at_collection": 31000,
+    "license": "Apache-2.0",
+    "selection_reason": "Google high-performance numerical computing and machine learning (>30k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "google/protobuf",
+    "url": "https://github.com/google/protobuf",
+    "primary_language": "C++",
+    "stars_at_collection": 67000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Google Protocol Buffers serialization format (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "google/flatbuffers",
+    "url": "https://github.com/google/flatbuffers",
+    "primary_language": "C++",
+    "stars_at_collection": 23500,
+    "license": "Apache-2.0",
+    "selection_reason": "Google memory-efficient cross-platform serialization (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "google-deepmind/optax",
+    "url": "https://github.com/google-deepmind/optax",
+    "primary_language": "Python",
+    "stars_at_collection": 2100,
+    "license": "Apache-2.0",
+    "selection_reason": "Google DeepMind JAX optimization library",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "facebook/react",
+    "url": "https://github.com/facebook/react",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 230000,
+    "license": "MIT",
+    "selection_reason": "Meta React library for web user interfaces (>230k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "facebook/zstd",
+    "url": "https://github.com/facebook/zstd",
+    "primary_language": "C",
+    "stars_at_collection": 24000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Meta fast lossless compression algorithm (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytorch/pytorch",
+    "url": "https://github.com/pytorch/pytorch",
+    "primary_language": "Python",
+    "stars_at_collection": 86000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Meta PyTorch deep learning platform (>85k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "facebook/jest",
+    "url": "https://github.com/facebook/jest",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 44000,
+    "license": "MIT",
+    "selection_reason": "Meta JavaScript testing framework (>40k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "apple/swift",
+    "url": "https://github.com/apple/swift",
+    "primary_language": "C++",
+    "stars_at_collection": 67000,
+    "license": "Apache-2.0",
+    "selection_reason": "Apple Swift programming language compiler (>65k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "apple/pkl",
+    "url": "https://github.com/apple/pkl",
+    "primary_language": "Java",
+    "stars_at_collection": 9800,
+    "license": "Apache-2.0",
+    "selection_reason": "Apple declarative configuration language",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "aws/aws-cli",
+    "url": "https://github.com/aws/aws-cli",
+    "primary_language": "Python",
+    "stars_at_collection": 15400,
+    "license": "Apache-2.0",
+    "selection_reason": "Amazon Web Services CLI tool in Python (>15k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "aws/aws-sdk-js-v3",
+    "url": "https://github.com/aws/aws-sdk-js-v3",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 3200,
+    "license": "Apache-2.0",
+    "selection_reason": "AWS Modular JavaScript SDK v3",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pallets/flask",
+    "url": "https://github.com/pallets/flask",
+    "primary_language": "Python",
+    "stars_at_collection": 68000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Standard Python WSGI microframework (>68k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "psf/requests",
+    "url": "https://github.com/psf/requests",
+    "primary_language": "Python",
+    "stars_at_collection": 52000,
+    "license": "Apache-2.0",
+    "selection_reason": "Standard Python HTTP library (>50k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "tiangolo/fastapi",
+    "url": "https://github.com/tiangolo/fastapi",
+    "primary_language": "Python",
+    "stars_at_collection": 78000,
+    "license": "MIT",
+    "selection_reason": "Standard modern Python ASGI web framework (>75k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pydantic/pydantic",
+    "url": "https://github.com/pydantic/pydantic",
+    "primary_language": "Python",
+    "stars_at_collection": 21500,
+    "license": "MIT",
+    "selection_reason": "Standard Python data validation and parsing library (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytest-dev/pytest",
+    "url": "https://github.com/pytest-dev/pytest",
+    "primary_language": "Python",
+    "stars_at_collection": 12000,
+    "license": "MIT",
+    "selection_reason": "Primary testing framework for the Python ecosystem (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "astral-sh/uv",
+    "url": "https://github.com/astral-sh/uv",
+    "primary_language": "Rust",
+    "stars_at_collection": 42000,
+    "license": "Apache-2.0",
+    "selection_reason": "Extremely fast Python package and environment manager (>40k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "astral-sh/ruff",
+    "url": "https://github.com/astral-sh/ruff",
+    "primary_language": "Rust",
+    "stars_at_collection": 35000,
+    "license": "MIT",
+    "selection_reason": "Extremely fast Python linter and code formatter (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "encode/httpx",
+    "url": "https://github.com/encode/httpx",
+    "primary_language": "Python",
+    "stars_at_collection": 13500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Next-generation HTTP client for Python with async support (>13k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "sqlalchemy/sqlalchemy",
+    "url": "https://github.com/sqlalchemy/sqlalchemy",
+    "primary_language": "Python",
+    "stars_at_collection": 9500,
+    "license": "MIT",
+    "selection_reason": "The Python SQL Toolkit and Object Relational Mapper",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "scikit-learn/scikit-learn",
+    "url": "https://github.com/scikit-learn/scikit-learn",
+    "primary_language": "Python",
+    "stars_at_collection": 59000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Machine learning library in Python (>55k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pandas-dev/pandas",
+    "url": "https://github.com/pandas-dev/pandas",
+    "primary_language": "Python",
+    "stars_at_collection": 43000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Flexible and powerful data analysis / manipulation library (>40k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "django/django",
+    "url": "https://github.com/django/django",
+    "primary_language": "Python",
+    "stars_at_collection": 80000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "The Web framework for perfectionists with deadlines (>80k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "ansible/ansible",
+    "url": "https://github.com/ansible/ansible",
+    "primary_language": "Python",
+    "stars_at_collection": 62000,
+    "license": "GPL-3.0",
+    "selection_reason": "Radically simple IT automation system (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "celery/celery",
+    "url": "https://github.com/celery/celery",
+    "primary_language": "Python",
+    "stars_at_collection": 24500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Distributed Task Queue in Python (>24k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "psf/black",
+    "url": "https://github.com/psf/black",
+    "primary_language": "Python",
+    "stars_at_collection": 38000,
+    "license": "MIT",
+    "selection_reason": "The uncompromising Python code formatter (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pylint-dev/pylint",
+    "url": "https://github.com/pylint-dev/pylint",
+    "primary_language": "Python",
+    "stars_at_collection": 10200,
+    "license": "GPL-2.0",
+    "selection_reason": "Python static code analysis tool (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "tox-dev/tox",
+    "url": "https://github.com/tox-dev/tox",
+    "primary_language": "Python",
+    "stars_at_collection": 3600,
+    "license": "MIT",
+    "selection_reason": "Generic virtualenv management and test command line tool",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "python/mypy",
+    "url": "https://github.com/python/mypy",
+    "primary_language": "Python",
+    "stars_at_collection": 18500,
+    "license": "MIT",
+    "selection_reason": "Optional static typing for Python (>18k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "urllib3/urllib3",
+    "url": "https://github.com/urllib3/urllib3",
+    "primary_language": "Python",
+    "stars_at_collection": 3700,
+    "license": "MIT",
+    "selection_reason": "User-friendly HTTP client library for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "marshmallow-code/marshmallow",
+    "url": "https://github.com/marshmallow-code/marshmallow",
+    "primary_language": "Python",
+    "stars_at_collection": 7000,
+    "license": "MIT",
+    "selection_reason": "Simplified object serialization in Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "bottlepy/bottle",
+    "url": "https://github.com/bottlepy/bottle",
+    "primary_language": "Python",
+    "stars_at_collection": 8500,
+    "license": "MIT",
+    "selection_reason": "Fast and simple WSGI-micro framework for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "falconry/falcon",
+    "url": "https://github.com/falconry/falcon",
+    "primary_language": "Python",
+    "stars_at_collection": 9300,
+    "license": "Apache-2.0",
+    "selection_reason": "Reliable, high-performance Python web API framework",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "expressjs/express",
+    "url": "https://github.com/expressjs/express",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 64000,
+    "license": "MIT",
+    "selection_reason": "Fast, unopinionated, minimalist web framework for Node.js (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "vercel/next.js",
+    "url": "https://github.com/vercel/next.js",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 126000,
+    "license": "MIT",
+    "selection_reason": "The React Framework for the Web (>120k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "tailwindlabs/tailwindcss",
+    "url": "https://github.com/tailwindlabs/tailwindcss",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 82000,
+    "license": "MIT",
+    "selection_reason": "Utility-first CSS framework for rapid UI development (>80k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "reduxjs/redux",
+    "url": "https://github.com/reduxjs/redux",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 60500,
+    "license": "MIT",
+    "selection_reason": "Predictable state container for JavaScript apps (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "lodash/lodash",
+    "url": "https://github.com/lodash/lodash",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 59000,
+    "license": "MIT",
+    "selection_reason": "Modern JavaScript utility library delivering modularity (>55k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "axios/axios",
+    "url": "https://github.com/axios/axios",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 105000,
+    "license": "MIT",
+    "selection_reason": "Promise based HTTP client for browser and node.js (>100k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "chalk/chalk",
+    "url": "https://github.com/chalk/chalk",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 21500,
+    "license": "MIT",
+    "selection_reason": "Terminal string styling done right (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "sindresorhus/got",
+    "url": "https://github.com/sindresorhus/got",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 13800,
+    "license": "MIT",
+    "selection_reason": "Human-friendly and powerful HTTP request library for Node.js (>13k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "fastify/fastify",
+    "url": "https://github.com/fastify/fastify",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 32000,
+    "license": "MIT",
+    "selection_reason": "Fast and low overhead web framework for Node.js (>30k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "nestjs/nest",
+    "url": "https://github.com/nestjs/nest",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 68000,
+    "license": "MIT",
+    "selection_reason": "Progressive Node.js framework for efficient scalable web apps (>65k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "vuejs/core",
+    "url": "https://github.com/vuejs/core",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 47000,
+    "license": "MIT",
+    "selection_reason": "Vue.js core framework repository (>45k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "vitejs/vite",
+    "url": "https://github.com/vitejs/vite",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 69000,
+    "license": "MIT",
+    "selection_reason": "Next generation frontend tooling (>65k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "webpack/webpack",
+    "url": "https://github.com/webpack/webpack",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 64500,
+    "license": "MIT",
+    "selection_reason": "A bundler for javascript and friends (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "eslint/eslint",
+    "url": "https://github.com/eslint/eslint",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 25000,
+    "license": "MIT",
+    "selection_reason": "Find and fix problems in your JavaScript code (>25k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "prettier/prettier",
+    "url": "https://github.com/prettier/prettier",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 49500,
+    "license": "MIT",
+    "selection_reason": "Opinionated code formatter for web development (>45k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "denoland/deno",
+    "url": "https://github.com/denoland/deno",
+    "primary_language": "Rust",
+    "stars_at_collection": 95000,
+    "license": "MIT",
+    "selection_reason": "Modern runtime for JavaScript and TypeScript (>90k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "nodejs/node",
+    "url": "https://github.com/nodejs/node",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 108000,
+    "license": "MIT",
+    "selection_reason": "Node.js JavaScript runtime environment (>100k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "chartjs/Chart.js",
+    "url": "https://github.com/chartjs/Chart.js",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 63000,
+    "license": "MIT",
+    "selection_reason": "Simple HTML5 Charts using the canvas element (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "moment/moment",
+    "url": "https://github.com/moment/moment",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 47800,
+    "license": "MIT",
+    "selection_reason": "Parse, validate, manipulate, and display dates in javascript (>45k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "date-fns/date-fns",
+    "url": "https://github.com/date-fns/date-fns",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 34000,
+    "license": "MIT",
+    "selection_reason": "Modern JavaScript date utility library (>30k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "git/git",
+    "url": "https://github.com/git/git",
+    "primary_language": "C",
+    "stars_at_collection": 54000,
+    "license": "GPL-2.0",
+    "selection_reason": "Git core version control system (>50k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "curl/curl",
+    "url": "https://github.com/curl/curl",
+    "primary_language": "C",
+    "stars_at_collection": 36000,
+    "license": "curl",
+    "selection_reason": "A command line tool and library for transferring data with URL syntax (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "redis/redis",
+    "url": "https://github.com/redis/redis",
+    "primary_language": "C",
+    "stars_at_collection": 66000,
+    "license": "RSALv2",
+    "selection_reason": "In-memory database that persists on disk (>65k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "golang/go",
+    "url": "https://github.com/golang/go",
+    "primary_language": "Go",
+    "stars_at_collection": 124000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "The Go programming language repository (>120k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "rust-lang/rust",
+    "url": "https://github.com/rust-lang/rust",
+    "primary_language": "Rust",
+    "stars_at_collection": 98000,
+    "license": "MIT",
+    "selection_reason": "Empowering everyone to build reliable and efficient software (>95k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "docker/cli",
+    "url": "https://github.com/docker/cli",
+    "primary_language": "Go",
+    "stars_at_collection": 4900,
+    "license": "Apache-2.0",
+    "selection_reason": "The official CLI for Docker container management",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "kubernetes/kubernetes",
+    "url": "https://github.com/kubernetes/kubernetes",
+    "primary_language": "Go",
+    "stars_at_collection": 110000,
+    "license": "Apache-2.0",
+    "selection_reason": "Production-Grade Container Orchestration (>100k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "hashicorp/terraform",
+    "url": "https://github.com/hashicorp/terraform",
+    "primary_language": "Go",
+    "stars_at_collection": 42500,
+    "license": "BSL-1.1",
+    "selection_reason": "Infrastructure as Code tool enabling safe lifecycle management (>40k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "neovim/neovim",
+    "url": "https://github.com/neovim/neovim",
+    "primary_language": "C",
+    "stars_at_collection": 84000,
+    "license": "Apache-2.0",
+    "selection_reason": "Vim-fork focused on extensibility and usability (>80k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "tmux/tmux",
+    "url": "https://github.com/tmux/tmux",
+    "primary_language": "C",
+    "stars_at_collection": 37000,
+    "license": "ISC",
+    "selection_reason": "Terminal multiplexer (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "openssl/openssl",
+    "url": "https://github.com/openssl/openssl",
+    "primary_language": "C",
+    "stars_at_collection": 25500,
+    "license": "Apache-2.0",
+    "selection_reason": "TLS/SSL and crypto library (>25k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "sqlite/sqlite",
+    "url": "https://github.com/sqlite/sqlite",
+    "primary_language": "C",
+    "stars_at_collection": 6800,
+    "license": "Public Domain",
+    "selection_reason": "Official Git mirror of the SQLite database engine",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "torvalds/linux",
+    "url": "https://github.com/torvalds/linux",
+    "primary_language": "C",
+    "stars_at_collection": 182000,
+    "license": "GPL-2.0",
+    "selection_reason": "Linux kernel source tree (>180k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "elastic/elasticsearch",
+    "url": "https://github.com/elastic/elasticsearch",
+    "primary_language": "Java",
+    "stars_at_collection": 70000,
+    "license": "ELv2",
+    "selection_reason": "Free and Open, Distributed, RESTful Search Engine (>68k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "apache/kafka",
+    "url": "https://github.com/apache/kafka",
+    "primary_language": "Java",
+    "stars_at_collection": 29000,
+    "license": "Apache-2.0",
+    "selection_reason": "Distributed event streaming platform (>28k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "apache/spark",
+    "url": "https://github.com/apache/spark",
+    "primary_language": "Scala",
+    "stars_at_collection": 40000,
+    "license": "Apache-2.0",
+    "selection_reason": "Unified analytics engine for large-scale data processing (>38k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pallets/jinja",
+    "url": "https://github.com/pallets/jinja",
+    "primary_language": "Python",
+    "stars_at_collection": 10500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "A very fast and expressive template engine for Python (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pallets/werkzeug",
+    "url": "https://github.com/pallets/werkzeug",
+    "primary_language": "Python",
+    "stars_at_collection": 7200,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Comprehensive WSGI web application library",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pallets/click",
+    "url": "https://github.com/pallets/click",
+    "primary_language": "Python",
+    "stars_at_collection": 15600,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Composable command line interface toolkit for Python (>15k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytest-dev/pytest-cov",
+    "url": "https://github.com/pytest-dev/pytest-cov",
+    "primary_language": "Python",
+    "stars_at_collection": 1400,
+    "license": "MIT",
+    "selection_reason": "Pytest plugin for measuring coverage",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytest-dev/pytest-asyncio",
+    "url": "https://github.com/pytest-dev/pytest-asyncio",
+    "primary_language": "Python",
+    "stars_at_collection": 1500,
+    "license": "Apache-2.0",
+    "selection_reason": "Pytest support for asyncio libraries",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "certifi/python-certifi",
+    "url": "https://github.com/certifi/python-certifi",
+    "primary_language": "Python",
+    "stars_at_collection": 1200,
+    "license": "MPL-2.0",
+    "selection_reason": "Carefully curated collection of Root Certificates for validating SSL certificates",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pyca/cryptography",
+    "url": "https://github.com/pyca/cryptography",
+    "primary_language": "Python",
+    "stars_at_collection": 6400,
+    "license": "Apache-2.0",
+    "selection_reason": "Cryptography package providing cryptographic recipes and primitives",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "psf/requests-oauthlib",
+    "url": "https://github.com/requests/requests-oauthlib",
+    "primary_language": "Python",
+    "stars_at_collection": 2400,
+    "license": "ISC",
+    "selection_reason": "OAuthlib authentication support for Requests",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "oauthlib/oauthlib",
+    "url": "https://github.com/oauthlib/oauthlib",
+    "primary_language": "Python",
+    "stars_at_collection": 2700,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Generic, spec-compliant, thorough implementation of OAuth request-signing logic",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "encode/uvicorn",
+    "url": "https://github.com/encode/uvicorn",
+    "primary_language": "Python",
+    "stars_at_collection": 8100,
+    "license": "BSD-3-Clause",
+    "selection_reason": "An ASGI web server implementation for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "encode/starlette",
+    "url": "https://github.com/encode/starlette",
+    "primary_language": "Python",
+    "stars_at_collection": 10500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "The little ASGI framework that shines (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "huggingface/transformers",
+    "url": "https://github.com/huggingface/transformers",
+    "primary_language": "Python",
+    "stars_at_collection": 133000,
+    "license": "Apache-2.0",
+    "selection_reason": "State-of-the-art Machine Learning for Pytorch, TensorFlow, and JAX (>130k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "huggingface/tokenizers",
+    "url": "https://github.com/huggingface/tokenizers",
+    "primary_language": "Rust",
+    "stars_at_collection": 9200,
+    "license": "Apache-2.0",
+    "selection_reason": "Fast State-of-the-Art Tokenizers optimized for Research and Production",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "vllm-project/vllm",
+    "url": "https://github.com/vllm-project/vllm",
+    "primary_language": "Python",
+    "stars_at_collection": 38000,
+    "license": "Apache-2.0",
+    "selection_reason": "High-throughput and memory-efficient inference and serving engine for LLMs (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "ollama/ollama",
+    "url": "https://github.com/ollama/ollama",
+    "primary_language": "Go",
+    "stars_at_collection": 115000,
+    "license": "MIT",
+    "selection_reason": "Get up and running with Llama 3, Mistral, Gemma, and other large language models (>110k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "modelcontextprotocol/python-sdk",
+    "url": "https://github.com/modelcontextprotocol/python-sdk",
+    "primary_language": "Python",
+    "stars_at_collection": 4500,
+    "license": "MIT",
+    "selection_reason": "The official Python SDK for Model Context Protocol servers and clients",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "modelcontextprotocol/typescript-sdk",
+    "url": "https://github.com/modelcontextprotocol/typescript-sdk",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 5200,
+    "license": "MIT",
+    "selection_reason": "The official TypeScript SDK for Model Context Protocol servers and clients",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "octokit/octokit.js",
+    "url": "https://github.com/octokit/octokit.js",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 5500,
+    "license": "MIT",
+    "selection_reason": "The all-batteries-included GitHub SDK for Browsers, Node.js, and Deno",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "actions/checkout",
+    "url": "https://github.com/actions/checkout",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 5900,
+    "license": "MIT",
+    "selection_reason": "Action for checking out a repo under $GITHUB_WORKSPACE so your workflow can access it",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "actions/setup-python",
+    "url": "https://github.com/actions/setup-python",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 2400,
+    "license": "MIT",
+    "selection_reason": "Set up your GitHub Actions workflow with a specific version of Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "actions/setup-node",
+    "url": "https://github.com/actions/setup-node",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 3300,
+    "license": "MIT",
+    "selection_reason": "Set up your GitHub Actions workflow with a specific version of node.js",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "github/copilot-cli",
+    "url": "https://github.com/github/copilot-cli",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 5800,
+    "license": "MIT",
+    "selection_reason": "GitHub Copilot in the CLI",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "cli/cli",
+    "url": "https://github.com/cli/cli",
+    "primary_language": "Go",
+    "stars_at_collection": 37000,
+    "license": "MIT",
+    "selection_reason": "GitHub's official command line tool (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "git-lfs/git-lfs",
+    "url": "https://github.com/git-lfs/git-lfs",
+    "primary_language": "Go",
+    "stars_at_collection": 13000,
+    "license": "MIT",
+    "selection_reason": "Git extension for versioning large files (>12k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "protocolbuffers/protobuf-javascript",
+    "url": "https://github.com/protocolbuffers/protobuf-javascript",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 950,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Protocol Buffers implementation for JavaScript",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "graphql/graphql-js",
+    "url": "https://github.com/graphql/graphql-js",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 20500,
+    "license": "MIT",
+    "selection_reason": "A reference implementation of GraphQL for JavaScript (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "prisma/prisma",
+    "url": "https://github.com/prisma/prisma",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 39000,
+    "license": "Apache-2.0",
+    "selection_reason": "Next-generation ORM for Node.js & TypeScript (>35k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "typeorm/typeorm",
+    "url": "https://github.com/typeorm/typeorm",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 34000,
+    "license": "MIT",
+    "selection_reason": "ORM for TypeScript and JavaScript (>30k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "socketio/socket.io",
+    "url": "https://github.com/socketio/socket.io",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 61000,
+    "license": "MIT",
+    "selection_reason": "Realtime application framework (Node.JS server) (>60k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "ws/ws",
+    "url": "https://github.com/websockets/ws",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 22000,
+    "license": "MIT",
+    "selection_reason": "Simple to use, blazingly fast and thoroughly tested WebSocket client and server for Node.js (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "commander-rb/commander",
+    "url": "https://github.com/tj/commander.js",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 26000,
+    "license": "MIT",
+    "selection_reason": "Node.js command-line interfaces made easy (>25k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "yargs/yargs",
+    "url": "https://github.com/yargs/yargs",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 11000,
+    "license": "MIT",
+    "selection_reason": "Yargs be a node.js library that ferrets out command line arguments (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "debug-js/debug",
+    "url": "https://github.com/debug-js/debug",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 11200,
+    "license": "MIT",
+    "selection_reason": "A tiny JavaScript debugging utility modelled after Node.js core's debugging technique (>10k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "winstonjs/winston",
+    "url": "https://github.com/winstonjs/winston",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 23000,
+    "license": "MIT",
+    "selection_reason": "A logger for just about everything in Node.js (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pinojs/pino",
+    "url": "https://github.com/pinojs/pino",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 14000,
+    "license": "MIT",
+    "selection_reason": "Super fast, all natural JSON logger for Node.js (>13k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "visionmedia/supertest",
+    "url": "https://github.com/ladjs/supertest",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 13500,
+    "license": "MIT",
+    "selection_reason": "Super-agent driven library for testing node.js HTTP servers (>13k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "mochajs/mocha",
+    "url": "https://github.com/mochajs/mocha",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 22500,
+    "license": "MIT",
+    "selection_reason": "Simple, flexible, fun javascript test framework for node.js & the browser (>22k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "chaijs/chai",
+    "url": "https://github.com/chaijs/chai",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 8000,
+    "license": "MIT",
+    "selection_reason": "BDD / TDD assertion framework for node.js and the browser",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "sinonjs/sinon",
+    "url": "https://github.com/sinonjs/sinon",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 9500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Standalone test spies, stubs and mocks for JavaScript",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "gotwarlost/istanbul",
+    "url": "https://github.com/gotwarlost/istanbul",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 8700,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Yet another JS code coverage tool that computes line, statement and function coverage",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "istanbuljs/nyc",
+    "url": "https://github.com/istanbuljs/nyc",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 5200,
+    "license": "ISC",
+    "selection_reason": "The Istanbul command line interface",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "cheeriojs/cheerio",
+    "url": "https://github.com/cheeriojs/cheerio",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 29000,
+    "license": "MIT",
+    "selection_reason": "Fast, flexible, and lean implementation of core jQuery designed specifically for the server (>28k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "puppeteer/puppeteer",
+    "url": "https://github.com/puppeteer/puppeteer",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 89000,
+    "license": "Apache-2.0",
+    "selection_reason": "JavaScript API for Chrome and Firefox (>88k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "ts_structural",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "SeleniumHQ/selenium",
+    "url": "https://github.com/SeleniumHQ/selenium",
+    "primary_language": "Java",
+    "stars_at_collection": 31000,
+    "license": "Apache-2.0",
+    "selection_reason": "A browser automation framework and ecosystem (>30k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pallets/markupsafe",
+    "url": "https://github.com/pallets/markupsafe",
+    "primary_language": "Python",
+    "stars_at_collection": 850,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Safely add untrusted strings to HTML/XML markup in Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pallets/itsdangerous",
+    "url": "https://github.com/pallets/itsdangerous",
+    "primary_language": "Python",
+    "stars_at_collection": 2800,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Safely pass data to untrusted environments and back in Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "yaml/pyyaml",
+    "url": "https://github.com/yaml/pyyaml",
+    "primary_language": "Python",
+    "stars_at_collection": 2600,
+    "license": "MIT",
+    "selection_reason": "Canonical YAML parser and emitter for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "tox-dev/virtualenv",
+    "url": "https://github.com/pypa/virtualenv",
+    "primary_language": "Python",
+    "stars_at_collection": 4700,
+    "license": "MIT",
+    "selection_reason": "Virtual Python Environment builder",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/pip",
+    "url": "https://github.com/pypa/pip",
+    "primary_language": "Python",
+    "stars_at_collection": 9300,
+    "license": "MIT",
+    "selection_reason": "The Python package installer",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/packaging",
+    "url": "https://github.com/pypa/packaging",
+    "primary_language": "Python",
+    "stars_at_collection": 850,
+    "license": "Apache-2.0",
+    "selection_reason": "Core utilities for Python packages",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/setuptools",
+    "url": "https://github.com/pypa/setuptools",
+    "primary_language": "Python",
+    "stars_at_collection": 2500,
+    "license": "MIT",
+    "selection_reason": "Easily download, build, install, upgrade, and uninstall Python packages",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/wheel",
+    "url": "https://github.com/pypa/wheel",
+    "primary_language": "Python",
+    "stars_at_collection": 1100,
+    "license": "MIT",
+    "selection_reason": "A built-package format for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/build",
+    "url": "https://github.com/pypa/build",
+    "primary_language": "Python",
+    "stars_at_collection": 890,
+    "license": "MIT",
+    "selection_reason": "A simple, correct Python build frontend",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/flit",
+    "url": "https://github.com/pypa/flit",
+    "primary_language": "Python",
+    "stars_at_collection": 2100,
+    "license": "BSD-3-Clause",
+    "selection_reason": "A simple way to put Python packages and modules on PyPI",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/hatch",
+    "url": "https://github.com/pypa/hatch",
+    "primary_language": "Python",
+    "stars_at_collection": 5400,
+    "license": "MIT",
+    "selection_reason": "Modern, extensible Python project management",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "python-poetry/poetry",
+    "url": "https://github.com/python-poetry/poetry",
+    "primary_language": "Python",
+    "stars_at_collection": 31000,
+    "license": "MIT",
+    "selection_reason": "Python packaging and dependency management made easy (>30k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "networkx/networkx",
+    "url": "https://github.com/networkx/networkx",
+    "primary_language": "Python",
+    "stars_at_collection": 14500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Network Analysis in Python (>14k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "scipy/scipy",
+    "url": "https://github.com/scipy/scipy",
+    "primary_language": "Python",
+    "stars_at_collection": 13000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Fundamental algorithms for scientific computing in Python (>12k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "numpy/numpy",
+    "url": "https://github.com/numpy/numpy",
+    "primary_language": "Python",
+    "stars_at_collection": 28000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "The fundamental package for scientific computing with Python (>25k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "matplotlib/matplotlib",
+    "url": "https://github.com/matplotlib/matplotlib",
+    "primary_language": "Python",
+    "stars_at_collection": 20800,
+    "license": "PSF",
+    "selection_reason": "Plotting with Python (>20k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "mwaskom/seaborn",
+    "url": "https://github.com/mwaskom/seaborn",
+    "primary_language": "Python",
+    "stars_at_collection": 12500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Statistical data visualization in Python using matplotlib (>12k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "tqdm/tqdm",
+    "url": "https://github.com/tqdm/tqdm",
+    "primary_language": "Python",
+    "stars_at_collection": 29000,
+    "license": "MPL-2.0",
+    "selection_reason": "A Fast, Extensible Progress Bar for Python and CLI (>28k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "Textualize/rich",
+    "url": "https://github.com/Textualize/rich",
+    "primary_language": "Python",
+    "stars_at_collection": 49000,
+    "license": "MIT",
+    "selection_reason": "Rich is a Python library for rich text and beautiful formatting in the terminal (>45k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "Textualize/textual",
+    "url": "https://github.com/Textualize/textual",
+    "primary_language": "Python",
+    "stars_at_collection": 26000,
+    "license": "MIT",
+    "selection_reason": "The lean application framework for Python in the terminal (>25k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "Delgan/loguru",
+    "url": "https://github.com/Delgan/loguru",
+    "primary_language": "Python",
+    "stars_at_collection": 19000,
+    "license": "MIT",
+    "selection_reason": "Python logging made (stupidly) simple (>18k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "hynek/structlog",
+    "url": "https://github.com/hynek/structlog",
+    "primary_language": "Python",
+    "stars_at_collection": 3600,
+    "license": "Apache-2.0",
+    "selection_reason": "Structured Logging for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "samuelcolvin/watchfiles",
+    "url": "https://github.com/samuelcolvin/watchfiles",
+    "primary_language": "Python",
+    "stars_at_collection": 1800,
+    "license": "MIT",
+    "selection_reason": "Simple, modern and high performance file watching and code reload in Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "gorakhargosh/watchdog",
+    "url": "https://github.com/gorakhargosh/watchdog",
+    "primary_language": "Python",
+    "stars_at_collection": 6800,
+    "license": "Apache-2.0",
+    "selection_reason": "Python library and shell utilities to monitor filesystem events",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "paramiko/paramiko",
+    "url": "https://github.com/paramiko/paramiko",
+    "primary_language": "Python",
+    "stars_at_collection": 8900,
+    "license": "LGPL-2.1",
+    "selection_reason": "The leading native Python SSHv2 protocol library",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "fabric/fabric",
+    "url": "https://github.com/fabric/fabric",
+    "primary_language": "Python",
+    "stars_at_collection": 14900,
+    "license": "BSD-2-Clause",
+    "selection_reason": "Simple, Pythonic remote execution and deployment (>14k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pyinvoke/invoke",
+    "url": "https://github.com/pyinvoke/invoke",
+    "primary_language": "Python",
+    "stars_at_collection": 4500,
+    "license": "BSD-2-Clause",
+    "selection_reason": "Pythonic task execution",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "joeyespo/grip",
+    "url": "https://github.com/joeyespo/grip",
+    "primary_language": "Python",
+    "stars_at_collection": 7800,
+    "license": "MIT",
+    "selection_reason": "Preview GitHub Markdown files like Readme locally before commiting them",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "mkdocs/mkdocs",
+    "url": "https://github.com/mkdocs/mkdocs",
+    "primary_language": "Python",
+    "stars_at_collection": 19500,
+    "license": "BSD-2-Clause",
+    "selection_reason": "Project documentation with Markdown (>19k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "squidfunk/mkdocs-material",
+    "url": "https://github.com/squidfunk/mkdocs-material",
+    "primary_language": "HTML",
+    "stars_at_collection": 19000,
+    "license": "MIT",
+    "selection_reason": "Documentation that simply works with MkDocs (>18k stars)",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "ts_structural",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "sphinx-doc/sphinx",
+    "url": "https://github.com/sphinx-doc/sphinx",
+    "primary_language": "Python",
+    "stars_at_collection": 6500,
+    "license": "BSD-2-Clause",
+    "selection_reason": "The Sphinx documentation generator",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/readme_renderer",
+    "url": "https://github.com/pypa/readme_renderer",
+    "primary_language": "Python",
+    "stars_at_collection": 360,
+    "license": "Apache-2.0",
+    "selection_reason": "Safely render long_description/README on PyPI",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pypa/twine",
+    "url": "https://github.com/pypa/twine",
+    "primary_language": "Python",
+    "stars_at_collection": 1500,
+    "license": "Apache-2.0",
+    "selection_reason": "Utilities for interacting with PyPI",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "theorchard/boto",
+    "url": "https://github.com/boto/boto3",
+    "primary_language": "Python",
+    "stars_at_collection": 9200,
+    "license": "Apache-2.0",
+    "selection_reason": "The AWS SDK for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "boto/botocore",
+    "url": "https://github.com/boto/botocore",
+    "primary_language": "Python",
+    "stars_at_collection": 1800,
+    "license": "Apache-2.0",
+    "selection_reason": "Low-level, data-driven core of boto3",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "s3transfer/s3transfer",
+    "url": "https://github.com/boto/s3transfer",
+    "primary_language": "Python",
+    "stars_at_collection": 520,
+    "license": "Apache-2.0",
+    "selection_reason": "Amazon S3 Transfer Manager for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "jmespath/jmespath.py",
+    "url": "https://github.com/jmespath/jmespath.py",
+    "primary_language": "Python",
+    "stars_at_collection": 2100,
+    "license": "MIT",
+    "selection_reason": "JMESPath is a query language for JSON",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pyasn1/pyasn1",
+    "url": "https://github.com/pyasn1/pyasn1",
+    "primary_language": "Python",
+    "stars_at_collection": 580,
+    "license": "BSD-2-Clause",
+    "selection_reason": "Pure-Python implementation of ASN.1 types and codecs",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "rsa/python-rsa",
+    "url": "https://github.com/sybrenstuvel/python-rsa",
+    "primary_language": "Python",
+    "stars_at_collection": 1200,
+    "license": "Apache-2.0",
+    "selection_reason": "Pure-Python RSA implementation",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytz/pytz",
+    "url": "https://github.com/stub42/pytz",
+    "primary_language": "Python",
+    "stars_at_collection": 550,
+    "license": "MIT",
+    "selection_reason": "World timezone definitions, modern and historical",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "dateutil/dateutil",
+    "url": "https://github.com/dateutil/dateutil",
+    "primary_language": "Python",
+    "stars_at_collection": 2500,
+    "license": "Apache-2.0",
+    "selection_reason": "Extensions to the standard Python datetime module",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "six/six",
+    "url": "https://github.com/benjaminp/six",
+    "primary_language": "Python",
+    "stars_at_collection": 1100,
+    "license": "MIT",
+    "selection_reason": "Python 2 and 3 compatibility library",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "attrs/attrs",
+    "url": "https://github.com/python-attrs/attrs",
+    "primary_language": "Python",
+    "stars_at_collection": 5700,
+    "license": "MIT",
+    "selection_reason": "Python Classes Without Boilerplate",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "cattrs/cattrs",
+    "url": "https://github.com/python-attrs/cattrs",
+    "primary_language": "Python",
+    "stars_at_collection": 1400,
+    "license": "MIT",
+    "selection_reason": "Complex structuring and unstructuring of data in Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "coveragepy/coverage",
+    "url": "https://github.com/nedbat/coveragepy",
+    "primary_language": "Python",
+    "stars_at_collection": 3100,
+    "license": "Apache-2.0",
+    "selection_reason": "Code coverage measurement for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytest-dev/iniconfig",
+    "url": "https://github.com/pytest-dev/iniconfig",
+    "primary_language": "Python",
+    "stars_at_collection": 130,
+    "license": "MIT",
+    "selection_reason": "Brain-dead simple config-ini parsing for Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  },
+  {
+    "owner_repo": "pytest-dev/pluggy",
+    "url": "https://github.com/pytest-dev/pluggy",
+    "primary_language": "Python",
+    "stars_at_collection": 1300,
+    "license": "MIT",
+    "selection_reason": "A minimalist production ready plugin system in Python",
+    "applicable_capabilities": [
+      "inspect",
+      "commits",
+      "diff",
+      "python_ast",
+      "breaking_changes",
+      "release_notes"
+    ]
+  }
+]
