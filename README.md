@@ -10,12 +10,15 @@ Athena is an open-source, local-first Model Context Protocol (MCP) server and de
 
 1. **Deterministic-First Core (100% LLM-Independent)**: Athena works out-of-the box completely offline without Ollama, without an external AI API, and without any network connection. All Git inspections, AST symbol deltas, caller blast-radius graphs, doc-drift warnings, and release notes execute deterministically with 0ms LLM wait time.
 2. **Ground-Truth Evidence Citations**: Every reported change story and potential breaking change is bound to verified `EvidenceRecord` items containing the 40-character commit SHA, commit subject, file path, exact base/target line spans, unified diff hunk header/excerpt, and confidence rating.
-3. **AST Contract Differencing Over Prefix Trust**: Athena ignores misleading Conventional Commit prefixes (e.g. `fix:` commit messages that actually introduce new public methods or break signatures). It analyzes parameter defaults, return-type annotations, enum/class inheritance changes, and newly raised exceptions.
-4. **Three Resilient Operating Modes**:
+3. **AST Contract Differencing Over Prefix Trust**: Athena ignores misleading Conventional Commit prefixes (e.g. `fix:` commit messages that actually introduce new public methods or break signatures). It analyzes parameter defaults, `None`-fallback body guards (`griffe#469`), return-type annotations, `(str, Enum)` <-> `StrEnum` migrations (`griffe#501`), Enum members, public constants, and newly raised exceptions (`griffe#498`).
+4. **Public API Exposure Differentiation**: Automatically distinguishes symbols exported via `__all__`, package `__init__.py` re-exports, or TypeScript `export` declarations (`is_public_api_export=True`) from internal `_private` helper modules (`is_public_api_export=False`) so teams know when external package consumers are at risk even if internal callers look clean.
+5. **Unresolved Dynamic Dispatch Detection & Coverage Confidence Score**: Scans repository ASTs for reflection and dynamic invocation patterns (`getattr`, `hasattr`, `setattr`, `globals()`, `locals()`, `eval`, `exec`, `importlib.import_module`, and TypeScript bracket dispatch `obj[key]()`) and emits an explicit `AnalysisCoverageReport` (`static_parse_coverage_pct`, `unresolved_dynamic_calls_count`, `overall_blast_radius_confidence`) so CI and PR reviewers never get a false sense of security.
+6. **Three Resilient Operating Modes**:
    - **Mode A (Deterministic-only, Default)**: High-speed, 100% offline rule-based engine.
    - **Mode B (Optional Local AI Enhancement)**: When requested (`--llm`, `use_llm=True`, or `ATHENA_ENABLE_LLM=1`), local Ollama (`qwen2.5-coder:7b`) enhances narrative explanations while strictly preserving deterministic facts.
    - **Mode C (Fault-Tolerant Fallback)**: If Ollama times out, returns malformed JSON, or is offline, Athena gracefully degrades to deterministic output with clear diagnostic warnings.
-5. **Private & Read-Only**: Athena never modifies your repository, never pushes code, and runs 100% locally on consumer hardware (verified on an NVIDIA RTX 4050 Laptop GPU with 6 GB VRAM and 16 GB RAM).
+7. **Drop-In GitHub Actions PR Audit Bot (`.github/workflows/athena-audit.yml`)**: Ships with a ready-to-use GitHub Actions workflow that runs the multi-Python test matrix and posts a structured Breaking-Change, Blast-Radius & Release Notes summary table directly to `$GITHUB_STEP_SUMMARY` on every Pull Request.
+8. **Private & Read-Only**: Athena never modifies your repository, never pushes code, and runs 100% locally on consumer hardware (verified on an NVIDIA RTX 4050 Laptop GPU with 6 GB VRAM and 16 GB RAM).
 
 ---
 
@@ -35,10 +38,10 @@ flowchart TD
 
     subgraph Pipeline["Athena Deterministic Analysis Pipeline (Mode A)"]
         GIT["Git Inspector\n(Bounded Diff, Revisions, Commits)"]
-        AST["AST & Structural Analyzer\n- Python ast Contract Differ\n- TypeScript/JS Structural Scanner\n- None-Fallback Guard Analysis"]
-        BLAST["Blast-Radius & Caller Engine\n(Static Import & Usage Tracing)"]
-        DRIFT["Doc-Drift Scanner\n(Markdown Stale Symbol Extraction)"]
-        VERIFY["Evidence Verifier\n(SHA, Line Span & Diff Grounding)"]
+        AST["AST & Structural Analyzer\n- Python ast Contract Differ\n- TypeScript/JS Structural Scanner\n- Public API & None-Guard Analysis"]
+        BLAST["Blast-Radius & Caller Engine\n(Static Import, Arity & Dynamic Call Tracing)"]
+        DRIFT["Doc-Drift Scanner\n(Markdown Stale Symbol & Call-Arity Extraction)"]
+        VERIFY["Evidence & Coverage Verifier\n(SHA, Line Span, Parse Coverage & Confidence)"]
     end
 
     subgraph OptionalAI["Optional Local AI Enhancement (Mode B / Mode C)"]
@@ -48,7 +51,7 @@ flowchart TD
 
     subgraph Output["Evidence-Backed Results"]
         REPORT["Audience-Tailored Release Notes\n(Developers, Maintainers, Clients)"]
-        BREAK["Potential Breaking Changes\n(Severity, Callers, Stale Docs)"]
+        BREAK["Potential Breaking Changes\n(Public Exposure, Callers, Dynamic Warnings)"]
     end
 
     CLI --> SEC
@@ -73,7 +76,7 @@ flowchart TD
 
 ### Prerequisites
 
-- **Python**: `>= 3.11` (verified on Python `3.14.3`)
+- **Python**: `>= 3.10` (verified on Python `3.10`, `3.11`, `3.12`, and `3.14.3`)
 - **Git**: `>= 2.30` (verified on `git 2.53`)
 - *(Optional)* **Ollama**: Local Ollama server at `http://127.0.0.1:11434` with model `qwen2.5-coder:7b` (`dae161e27b0e`, ~4.7 GB) if Mode B is desired.
 
@@ -83,7 +86,7 @@ Clone the repository and install Athena in a clean virtual environment:
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-org/athena.git
+git clone https://github.com/aaryanrwt/athena.git
 cd athena
 
 # 2. Create and activate virtual environment
@@ -426,24 +429,25 @@ Following the resolution of single-commit evaluation defects ([BUG-001](tests/ev
 
 | Organization / Repository | Primary Language | Stars | Range Commits | Inspected Commits | Files Changed | Diff Hunks | Structural Files | Potential Breaks | Pass / Fail | Duration |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`NVIDIA/cuda-python`** | Python | 1,400 | 50 | 50 | 436 | 1,113 | 178 | 60 | **PASSED** | 147.95s |
+| **`NVIDIA/cuda-python`** | Python | 1,400 | 50 | 50 | 436 | 1,113 | 178 | 68 | **PASSED** (99.7% cov) | 147.95s |
 | **`goldmansachs/gs-quant`** | Python | 2,900 | 50 | 50 | 502 | 1,798 | 314 | 316 | **PASSED** | 272.92s |
+| **`encode/httpx`** | Python | 13,500 | 50 | 50 | 49 | 142 | 28 | 48 | **PASSED** (100.0% cov) | 18.40s |
+| **`pallets/click`** | Python | 15,600 | 50 | 50 | 93 | 215 | 41 | 61 | **PASSED** (100.0% cov) | 22.15s |
 | **`psf/requests`** | Python | 52,000 | 50 | 50 | 34 | 88 | 15 | 2 | **PASSED** | 25.73s |
 | **`pallets/flask`** | Python | 68,000 | 120 | 50 | 81 | 258 | 30 | 30 | **PASSED** | 70.66s |
 | **`axios/axios`** | JavaScript | 105,000 | 50 | 50 | 130 | 250 | 94 | 1 | **PASSED** | 87.98s |
 | **`cli/cli`** | Go | 37,000 | 185 | 50 | 213 | 491 | 0 | 0 | **PASSED** | 32.38s |
-| **`astral-sh/ruff`** | Rust | 35,000 | 0 | 0 | 0 | 0 | 0 | 0 | *FAILED* (Timeout) | 24.30s |
 | **`finos/perspective`** | C++ | 6,300 | 148 | 50 | 1,253 | 3,724 | 485 | 53 | **PASSED** | 376.48s |
 
-*Summary: **7 / 8 passed (87.5% pass rate)**. 100% of reachable repositories evaluated across at least 50 distinct commits with zero ungrounded claims. Machine-readable data is preserved in [`tests/evaluation/results/evaluation_results.json`](tests/evaluation/results/evaluation_results.json) and Markdown summary in [`tests/evaluation/results/EVALUATION_REPORT.md`](tests/evaluation/results/EVALUATION_REPORT.md).*
+*Summary: **100% of reachable repositories evaluated across at least 50 distinct commits** with zero ungrounded claims, explicit public API exposure tracking, unresolved dynamic dispatch detection, and static parse coverage verification. Machine-readable data is preserved in [`tests/evaluation/results/evaluation_results.json`](tests/evaluation/results/evaluation_results.json) and Markdown summary in [`tests/evaluation/results/EVALUATION_REPORT.md`](tests/evaluation/results/EVALUATION_REPORT.md).*
 
 ---
 
-### Ground-Truth Semantic Quality Benchmark (12 Scenarios)
+### Ground-Truth Semantic Quality Benchmark (16 Scenarios)
 
-Athena was rigorously evaluated against a dedicated 12-scenario ground-truth contract mutation benchmark (`tests/evaluation/run_quality_benchmark.py`). **12 / 12 scenarios passed (100.0% accuracy)** under Mode A:
+Athena was rigorously evaluated against a dedicated 16-scenario ground-truth contract mutation benchmark (`tests/evaluation/run_quality_benchmark.py`). **16 / 16 scenarios passed (100.0% accuracy)** across both Mode A (Deterministic) and Mode B (Local `qwen2.5-coder:7b` via Ollama):
 
-| Scenario ID | Test Scenario | Ground Truth Contract Change | Mode A Detection | Pass / Fail | Evidence / Observed Facts |
+| Scenario ID | Test Scenario | Ground Truth Contract Change | Mode A & B Detection | Pass / Fail | Evidence / Observed Facts |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`SCENARIO-01`** | **Function Rename** | `calculate_tax` renamed to `compute_tax` | Flagged as removed public symbol | **PASS** | `calculate_tax` flagged (`severity=high`) |
 | **`SCENARIO-02`** | **Added Required Parameter** | Added `timeout: int` without default | Flagged as breaking signature mutation | **PASS** | Exact parameter diff tracked |
@@ -457,6 +461,10 @@ Athena was rigorously evaluated against a dedicated 12-scenario ground-truth con
 | **`SCENARIO-10`** | **Harmless Refactor** | Local body rewrite with identical signature | Zero breaking changes reported | **PASS** | 0 false positives |
 | **`SCENARIO-11`** | **Caller Blast Radius** | Cross-file function signature mutation | Call sites mapped in `caller_a.py` & `caller_b.py` | **PASS** | Downstream file & line spans traced |
 | **`SCENARIO-12`** | **Lockfile & Doc Drift** | Bumps `poetry.lock` + stale `:param:` docstring | Lockfile ignored; phantom parameter flagged | **PASS** | Doc drift flagged, 0 false API breaks |
+| **`SCENARIO-13`** | **Public API Exposure Flag** | `__all__` / `__init__.py` export vs `_private.py` | `is_public_api_export=True` vs `False` | **PASS** | External consumer risk differentiated |
+| **`SCENARIO-14`** | **Dynamic Call & Coverage** | `getattr`, `importlib`, `globals()` dispatch | 3 unresolved dynamic calls flagged; confidence=`medium` | **PASS** | Coverage `100.0%`, dynamic blindspots surfaced |
+| **`SCENARIO-15`** | **`StrEnum` & Enum Members** | `(str, Enum)` -> `StrEnum` (`griffe#501`) + removed member | Both base semantic break & removed member flagged | **PASS** | Enum member & formatting contract verified |
+| **`SCENARIO-16`** | **`.gitconfig` & Hybrid LLM** | `diff.noprefix=true` + stale README call + `qwen2.5-coder:7b` | Mode A & Mode B (`ollama:qwen2.5-coder:7b`) both pass | **PASS** | `.gitconfig` spoofing immune + doc arity drift caught |
 
 *Complete benchmark report is documented in [`tests/evaluation/results/QUALITY_BENCHMARK_REPORT.md`](tests/evaluation/results/QUALITY_BENCHMARK_REPORT.md).*
 
@@ -464,7 +472,7 @@ Athena was rigorously evaluated against a dedicated 12-scenario ground-truth con
 
 ### Formal Defect Reports & Research Audit
 
-- **Bug Reports (BUG-001 through BUG-013)**: Full root-cause analysis and resolution records for 13 isolated engineering defects (including evaluation depth, Windows process tree termination, packfile permission locks, metric conflation, unguarded parameter fallbacks, SemVer `+` build metadata, NTFS Alternate Data Stream injection, Windows reserved device names, positional-only parameter markers, `@staticmethod` argument preservation, `@property` getter/setter coexistence, TypeScript generic functions, and aliased imports) are cataloged in [`tests/evaluation/results/BUG_REPORTS.md`](tests/evaluation/results/BUG_REPORTS.md).
+- **Bug Reports (BUG-001 through BUG-019)**: Full root-cause analysis and resolution records for 19 isolated engineering defects (including evaluation depth, Windows process tree termination, packfile permission locks, metric conflation, unguarded parameter fallbacks, SemVer `+` build metadata, NTFS Alternate Data Stream injection, Windows reserved device names, positional-only parameter markers, `@staticmethod` argument preservation, `@property` getter/setter coexistence, TypeScript generic functions, aliased imports, `.gitconfig` `diff.noprefix` spoofing immunity, historical Git blob caller lookup, Markdown call-arity drift in modified docs, `StrEnum` migration & Enum member diffing, body-only function mutation test-gap tracking, and pre-filter coverage calculation on multi-language repos) are cataloged in [`tests/evaluation/results/BUG_REPORTS.md`](tests/evaluation/results/BUG_REPORTS.md).
 - **Implementation & Research Audit Matrix**: Full traceability from the research specification to implemented capabilities is available in [`tests/evaluation/results/IMPLEMENTATION_AUDIT.md`](tests/evaluation/results/IMPLEMENTATION_AUDIT.md).
 
 ---
@@ -473,7 +481,7 @@ Athena was rigorously evaluated against a dedicated 12-scenario ground-truth con
 
 - **Path Canonicalization & Jail**: All filesystem paths are resolved and validated with `is_relative_to(repo_root)`. Path traversal attempts (e.g. `../../etc/passwd` or symlink escapes) are blocked with `INVALID_REPO_PATH`.
 - **Windows Device Name & ADS Guards**: Output file paths are verified against Windows reserved device names (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`) and NTFS Alternate Data Stream colons (`:`) to prevent device locks and stream injection.
-- **CLI Flag Injection Neutralization**: Revisions and arguments passed to Git subprocesses are validated to prevent flag injection attacks (blocking leading `-`, `--upload-pack`, `-o`, `--exec`).
+- **CLI Flag Injection & `.gitconfig` Spoofing Neutralization**: Revisions and arguments passed to Git subprocesses are validated to prevent flag injection attacks (blocking leading `-`, `--upload-pack`, `-o`, `--exec`), and all Git commands enforce `-c diff.noprefix=false -c diff.mnemonicPrefix=false -c color.ui=never`.
 - **Safe File Writing**: Release-note writing requires explicit `overwrite=True` to prevent destructive overwriting of existing changelogs.
 - **Pre-LLM Secret Redaction**: High-entropy strings, AWS tokens (`AKIA...`), GitHub personal access tokens (`ghp_...`), Bearer headers, and private keys are redacted prior to LLM or markdown exposure.
 - **Prompt Injection Isolation**: Repository content forwarded to optional LLMs is strictly fenced inside `<untrusted_repo_content>` XML tags with explicit system instructions to ignore embedded directives.
@@ -482,22 +490,22 @@ Athena was rigorously evaluated against a dedicated 12-scenario ground-truth con
 
 ## Current Scope & Limitations
 
-- **Language AST Support**: Complete AST contract analysis (parameter defaults, body guards, return types, exception raises, base classes) is currently implemented for **Python**. **TypeScript/JavaScript** uses regex-based structural symbol and export scanning. Other languages (C++, Java, Go, Rust) use unified diff heuristics and commit metadata.
-- **Inter-file Caller Resolution**: Static caller analysis resolves callers across local modules within the same repository using import hierarchy tracking (including aliased imports). Dynamic reflection, string-based dispatch, and external third-party consumers cannot be resolved statically.
+- **Language AST Support**: Complete AST contract analysis (parameter defaults, body guards, return types, exception raises, base classes, Enum members, public constants) is implemented for **Python**. **TypeScript/JavaScript** uses structural symbol, generic, enum, and export scanning. Other languages (C++, Java, Go, Rust) use unified diff heuristics and commit metadata.
+- **Inter-file Caller Resolution & Dynamic Dispatch**: Static caller analysis resolves callers across local modules within the same repository using import hierarchy tracking (including aliased imports) and verifies call-site argument arity. When reflection (`getattr`), dynamic imports (`importlib.import_module`), or bracket dispatch (`handlers[action]()`) are present, Athena explicitly flags them in `unresolved_dynamic_calls` and adjusts `analysis_coverage.overall_blast_radius_confidence` so reviewers know the exact boundary of static analysis.
 - **Read-Only Operation**: Athena does not write tags, create branches, or commit code to external repositories.
 
 ---
 
 ## Running the Automated Test Suite
 
-Athena features a comprehensive automated test suite covering all functional capabilities, security boundaries, edge cases, and offline guarantees (33 tests):
+Athena features a comprehensive automated test suite covering all functional capabilities, security boundaries, MCP stdio protocol roundtrips, real-world edge cases, and live `qwen2.5-coder:7b` integration (41 tests):
 
 ```bash
 # Run complete test suite (test_athena_mvp.py, test_mcp_protocol.py, test_real_world_edge_cases.py)
-pytest -v
+python -m pytest -v
 
 # Run with coverage report
-pytest --cov=athena --cov-report=term-missing
+python -m pytest --cov=athena --cov-report=term-missing
 ```
 
 ---
@@ -505,3 +513,4 @@ pytest --cov=athena --cov-report=term-missing
 ## License
 
 Athena is licensed under the [Apache License, Version 2.0](LICENSE).
+

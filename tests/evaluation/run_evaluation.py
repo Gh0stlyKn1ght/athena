@@ -279,6 +279,11 @@ def evaluate_single_repo(
         )
         if brk_rep.status == "ok":
             eval_result["breaking_changes_count"] = brk_rep.total_potential_breaking_changes
+            cov = brk_rep.analysis_coverage
+            eval_result["public_api_exports_modified_count"] = cov.public_api_exports_modified_count
+            eval_result["unresolved_dynamic_calls_count"] = cov.unresolved_dynamic_calls_count
+            eval_result["static_parse_coverage_pct"] = cov.static_parse_coverage_pct
+            eval_result["overall_blast_radius_confidence"] = cov.overall_blast_radius_confidence
             all_ev_valid = True
             for f in brk_rep.potential_breaking_changes:
                 for ev in f.evidence:

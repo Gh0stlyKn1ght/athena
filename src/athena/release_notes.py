@@ -89,6 +89,8 @@ def run_git_history_analysis(
         symbol_changes=structural.symbol_changes,
         untested_modified_symbols=structural.untested_modified_symbols,
         doc_drift=structural.doc_drift_items,
+        unresolved_dynamic_calls=structural.unresolved_dynamic_calls,
+        analysis_coverage=structural.analysis_coverage,
         evidence_registry=extraction.evidence_registry,
         stripped_ungrounded_claims_count=stripped_count,
         warnings=warnings,
@@ -151,6 +153,8 @@ def run_breaking_change_detection(
         potential_breaking_changes=breaking_findings,
         untested_modified_symbols=structural.untested_modified_symbols,
         doc_drift=structural.doc_drift_items,
+        unresolved_dynamic_calls=structural.unresolved_dynamic_calls,
+        analysis_coverage=structural.analysis_coverage,
         evidence_registry=extraction.evidence_registry,
         stripped_ungrounded_claims_count=stripped_count,
         warnings=warnings,
@@ -196,10 +200,13 @@ def _format_breaking_bullet(finding: PotentialBreakingChangeFinding, audience: s
     sig_delta = ""
     if finding.old_signature or finding.new_signature:
         sig_delta = f" (`{finding.old_signature or 'none'}` -> `{finding.new_signature or 'removed'}`)"
+    export_badge = " | `Public API Export`" if finding.is_public_api_export else ""
     caller_note = ""
     if finding.affected_callers:
         locs = ", ".join(f"`{c.caller_file}:{c.line_number}`" for c in finding.affected_callers[:3])
-        caller_note = f" | Affected callers ({len(finding.affected_callers)}): {locs}"
+        broken_cnt = sum(1 for c in finding.affected_callers if c.arity_mismatch_detected)
+        broken_suffix = f", {broken_cnt} arity-broken" if broken_cnt else ""
+        caller_note = f" | Affected callers ({len(finding.affected_callers)}{broken_suffix}): {locs}"
     drift_note = ""
     if finding.doc_drift:
         dlocs = ", ".join(f"`{d.doc_file}:{d.line_number}`" for d in finding.doc_drift[:2])
@@ -211,7 +218,7 @@ def _format_breaking_bullet(finding: PotentialBreakingChangeFinding, audience: s
             f"{finding.model_interpretation}{citation}"
         )
     return (
-        f"- **[Requires Human Review | severity={finding.severity} | confidence={finding.confidence}] {finding.title}**"
+        f"- **[Requires Human Review | severity={finding.severity} | confidence={finding.confidence}{export_badge}] {finding.title}**"
         f"{sig_delta}: {finding.model_interpretation}{caller_note}{drift_note}{citation}"
     )
 
@@ -387,6 +394,15 @@ def run_release_notes_generation(
             f"- **Documentation Drift (`{dd.doc_file}:{dd.line_number}`)**: {dd.drift_reason}"
         )
         upgrade_ev_ids.extend(dd.evidence_ids)
+    if structural.unresolved_dynamic_calls and (audience_clean in ("developers", "maintainers") or breaking_findings):
+        dyn_locs = ", ".join(
+            f"`{d.file_path}:{d.line_number}` (`{d.pattern_kind}`)"
+            for d in structural.unresolved_dynamic_calls[:4]
+        )
+        upgrade_items.append(
+            f"- **Unresolved Dynamic Dispatch ({len(structural.unresolved_dynamic_calls)} site(s))**: "
+            f"Static caller graph cannot resolve reflection/dynamic dispatch at {dyn_locs}."
+        )
     if audience_clean == "maintainers" and structural.untested_modified_symbols:
         upgrade_items.append(
             f"- **Test Coverage Gap**: Modified public symbol(s) without detected test references: "
@@ -395,6 +411,14 @@ def run_release_notes_generation(
     upgrade_items = list(dict.fromkeys(upgrade_items))
     _add_section_if_nonempty("Upgrade Considerations", upgrade_items, upgrade_ev_ids)
 
+    cov = structural.analysis_coverage
+    cov_line = (
+        f"- **Static Analysis Coverage**: `{cov.static_parse_coverage_pct}%` "
+        f"(`{cov.files_parsed_successfully}/{cov.total_code_files_eligible}` code files parsed, "
+        f"blast-radius confidence=`{cov.overall_blast_radius_confidence}`, "
+        f"unresolved dynamic calls=`{cov.unresolved_dynamic_calls_count}`)"
+    )
+
     # Render Markdown document (omitting empty sections)
     md_lines = [
         f"# Release Notes — {release_version}",
@@ -402,6 +426,7 @@ def run_release_notes_generation(
         f"- **Revision Range**: `{extraction.base_ref}` (`{extraction.resolved_base_sha[:8]}`) -> `{extraction.target_ref}` (`{extraction.resolved_target_sha[:8] if extraction.resolved_target_sha != 'WORKING_TREE' else 'WORKING_TREE'}`)",
         f"- **Target Audience**: `{audience_clean}`",
         f"- **Analysis Engine**: `{llm_status}`",
+        cov_line,
         "",
         "## Release Summary",
         "",
@@ -435,9 +460,12 @@ def run_release_notes_generation(
         release_summary=summary_text,
         sections=sections,
         potential_breaking_changes=breaking_findings,
+        unresolved_dynamic_calls=structural.unresolved_dynamic_calls,
+        analysis_coverage=structural.analysis_coverage,
         markdown=markdown_doc,
         saved_to_file=saved_path_str,
         evidence_registry=extraction.evidence_registry,
         stripped_ungrounded_claims_count=stripped_count,
         warnings=warnings,
     )
+

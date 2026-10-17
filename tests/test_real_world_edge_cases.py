@@ -423,3 +423,333 @@ def test_edge_case_empty_commit_and_zero_diff(tmp_path: Path) -> None:
     assert report.status == "ok"
     assert len(report.sections) == 0
 
+
+# =========================================================================
+# EDGE CASE GROUP 6: PUBLIC API EXPOSURE, DYNAMIC CALLS & COVERAGE METRICS
+# =========================================================================
+
+def test_feature_public_api_exposure_flag_python_and_ts(tmp_path: Path) -> None:
+    """Symbols exported in __all__, __init__.py, or TypeScript export must be flagged is_public_api_export=True, while _internal modules are False."""
+    repo = tmp_path / "public_api_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "pkg").mkdir()
+    (repo / "pkg" / "__init__.py").write_text(
+        "from .api import exported_fn\n__all__ = ['exported_fn']\n",
+        encoding="utf-8",
+    )
+    (repo / "pkg" / "api.py").write_text(
+        "__all__ = ['exported_fn']\n"
+        "def exported_fn(x: int) -> int:\n    return x\n",
+        encoding="utf-8",
+    )
+    (repo / "pkg" / "_internal.py").write_text(
+        "def internal_helper(y: int) -> int:\n    return y\n",
+        encoding="utf-8",
+    )
+    (repo / "sdk.ts").write_text(
+        "export function fetchClient(id: string): Promise<void> {}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial public and internal modules")
+    _git(repo, "tag", "v1.0")
+
+    # Mutate all three with breaking parameter additions
+    (repo / "pkg" / "api.py").write_text(
+        "__all__ = ['exported_fn']\n"
+        "def exported_fn(x: int, required_ token: str) -> int:\n    return x\n".replace("required_ token", "required_token"),
+        encoding="utf-8",
+    )
+    (repo / "pkg" / "_internal.py").write_text(
+        "def internal_helper(y: int, strict: bool) -> int:\n    return y\n",
+        encoding="utf-8",
+    )
+    (repo / "sdk.ts").write_text(
+        "export function fetchClient(id: string, region: string): Promise<void> {}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "refactor: update signatures")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    by_sym = {f.affected_symbol: f for f in report.potential_breaking_changes}
+    assert "exported_fn" in by_sym
+    assert by_sym["exported_fn"].is_public_api_export is True
+    assert "__all__" in by_sym["exported_fn"].public_api_exposure_reason or "__init__.py" in by_sym["exported_fn"].public_api_exposure_reason
+
+    assert "fetchClient" in by_sym
+    assert by_sym["fetchClient"].is_public_api_export is True
+
+    assert "internal_helper" in by_sym
+    assert by_sym["internal_helper"].is_public_api_export is False
+
+
+def test_feature_unresolved_dynamic_call_detection_and_coverage(tmp_path: Path) -> None:
+    """Dynamic reflection (getattr, globals(), eval, importlib, TS bracket dispatch) must be flagged in unresolved_dynamic_calls and coverage score."""
+    repo = tmp_path / "dynamic_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "plugin.py").write_text(
+        "def execute_task(payload: dict) -> bool:\n    return True\n",
+        encoding="utf-8",
+    )
+    (repo / "dispatcher.py").write_text(
+        "import importlib\n"
+        "import plugin\n\n"
+        "def run_dynamic(name: str, data: dict):\n"
+        "    fn = getattr(plugin, 'execute_task')\n"
+        "    mod = importlib.import_module('plugin')\n"
+        "    g = globals()['run_dynamic']\n"
+        "    return fn(data)\n",
+        encoding="utf-8",
+    )
+    (repo / "router.ts").write_text(
+        "export function dispatch(handlers: Record<string, Function>, action: string, payload: any) {\n"
+        "    return handlers[action](payload);\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial plugin and dynamic dispatcher")
+    _git(repo, "tag", "v1.0")
+
+    # Add required param to execute_task
+    (repo / "plugin.py").write_text(
+        "def execute_task(payload: dict, context: dict) -> bool:\n    return True\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: require context in execute_task")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    assert len(report.unresolved_dynamic_calls) >= 3
+    patterns = {d.pattern_kind for d in report.unresolved_dynamic_calls}
+    assert "getattr_reflection" in patterns
+    assert "importlib_dynamic" in patterns
+    assert "globals_locals_lookup" in patterns
+    assert "ts_bracket_dispatch" in patterns
+
+    cov = report.analysis_coverage
+    assert cov is not None
+    assert cov.total_code_files_eligible >= 3
+    assert cov.files_parsed_successfully >= 3
+    assert cov.static_parse_coverage_pct == 100.0
+    assert cov.unresolved_dynamic_calls_count == len(report.unresolved_dynamic_calls)
+    assert cov.overall_blast_radius_confidence in ("medium", "low")
+
+
+# =========================================================================
+# EDGE CASE GROUP 7: REAL-WORLD BUG FIX VERIFICATIONS (BUG-014 TO BUG-018)
+# =========================================================================
+
+def test_bug_014_gitconfig_diff_noprefix_and_mnemonic_immunity(tmp_path: Path) -> None:
+    """BUG-014: Repository .gitconfig with diff.noprefix=true or diff.mnemonicPrefix=true must not break diff parsing."""
+    repo = tmp_path / "noprefix_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+    # Set adversarial git config options that strip standard a/ and b/ diff headers
+    _git(repo, "config", "diff.noprefix", "true")
+    _git(repo, "config", "diff.mnemonicPrefix", "true")
+    _git(repo, "config", "color.ui", "always")
+
+    (repo / "service.py").write_text("def serve(port: int) -> None:\n    pass\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial service")
+    _git(repo, "tag", "v1.0")
+
+    (repo / "service.py").write_text("def serve(port: int, host: str) -> None:\n    pass\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: require host")
+
+    extraction = extract_revision_range_data(repo, base_ref="v1.0", target_ref="HEAD")
+    assert len(extraction.changed_files) == 1
+    assert extraction.changed_files[0].file_path == "service.py"
+    assert len(extraction.changed_files[0].hunk_headers) >= 1
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    assert report.total_potential_breaking_changes >= 1
+
+
+def test_bug_015_historical_revision_blob_caller_lookup_and_arity(tmp_path: Path) -> None:
+    """BUG-015: Analyzing historical range (v1.0..v2.0) must find callers in v2.0 even if deleted in v3.0 working tree, and flag arity mismatch."""
+    repo = tmp_path / "historical_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "core.py").write_text("def process(item: str) -> str:\n    return item\n", encoding="utf-8")
+    (repo / "legacy_caller.py").write_text(
+        "from core import process\n\ndef run():\n    return process('abc')\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: v1")
+    _git(repo, "tag", "v1.0")
+
+    # In v2.0, core.process adds a required argument, breaking legacy_caller.py
+    (repo / "core.py").write_text("def process(item: str, mode: str) -> str:\n    return item\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: v2 add mode")
+    _git(repo, "tag", "v2.0")
+
+    # In v3.0 (HEAD / working tree), legacy_caller.py is deleted from disk
+    (repo / "legacy_caller.py").unlink()
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-m", "chore: remove legacy_caller in v3")
+
+    # Analyze historical range v1.0 -> v2.0
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="v2.0", use_llm=False)
+    assert report.status == "ok"
+    brk = [b for b in report.potential_breaking_changes if b.affected_symbol == "process"]
+    assert len(brk) == 1
+    callers = brk[0].affected_callers
+    assert any(c.caller_file == "legacy_caller.py" for c in callers), "Historical blob caller was missed!"
+    matched_caller = [c for c in callers if c.caller_file == "legacy_caller.py"][0]
+    assert matched_caller.arity_mismatch_detected is True
+
+
+def test_bug_016_markdown_doc_drift_when_doc_file_edited_with_stale_arity(tmp_path: Path) -> None:
+    """BUG-016: If a PR modifies README.md (e.g. header) but leaves a stale 2-arg call to a now 3-arg function, doc_drift must still fire."""
+    repo = tmp_path / "doc_arity_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "math_api.py").write_text("def compute_score(x: int, y: int) -> int:\n    return x + y\n", encoding="utf-8")
+    (repo / "README.md").write_text(
+        "# Math API\n\nUsage:\n```python\nres = compute_score(10, 20)\n```\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial math api and docs")
+    _git(repo, "tag", "v1.0")
+
+    # Update compute_score to require 3 arguments, and touch README.md title without updating the 2-arg call
+    (repo / "math_api.py").write_text(
+        "def compute_score(x: int, y: int, weights: list) -> int:\n    return x + y\n",
+        encoding="utf-8",
+    )
+    (repo / "README.md").write_text(
+        "# Math API v2\n\nUsage:\n```python\nres = compute_score(10, 20)\n```\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: add weights to compute_score and update readme title")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    assert any(
+        d.doc_file == "README.md" and d.referenced_symbol == "compute_score"
+        for d in report.doc_drift
+    ), f"Doc drift missed stale 2-arg call in edited README.md! Found: {report.doc_drift}"
+
+
+def test_bug_017_strenum_migration_enum_members_and_public_constants() -> None:
+    """BUG-017: (str, Enum) <-> StrEnum base change (griffe#501), removed Enum members, and modified UPPER_CASE constants must be detected."""
+    old_code = (
+        "from enum import Enum\n"
+        "MAX_RETRIES = 3\n"
+        "class Color(str, Enum):\n"
+        "    RED = 'red'\n"
+        "    BLUE = 'blue'\n"
+    )
+    new_code = (
+        "from enum import StrEnum\n"
+        "MAX_RETRIES = 5\n"
+        "class Color(StrEnum):\n"
+        "    RED = 'red'\n"
+    )
+    syms_old = _parse_python_symbols(old_code)
+    syms_new = _parse_python_symbols(new_code)
+
+    assert "MAX_RETRIES" in syms_old and "MAX_RETRIES" in syms_new
+    const_findings = _compare_python_symbol("consts.py", syms_old["MAX_RETRIES"], syms_new["MAX_RETRIES"])
+    assert any(is_brk for _, is_brk, _, _ in const_findings), "Modified public constant MAX_RETRIES must be flagged!"
+
+    enum_findings = _compare_python_symbol("consts.py", syms_old["Color"], syms_new["Color"])
+    reasons = " | ".join(r for _, _, _, r in enum_findings)
+    assert "StrEnum" in reasons, f"Missing StrEnum migration warning in: {reasons}"
+    assert "BLUE" in reasons, f"Missing removed Enum member BLUE warning in: {reasons}"
+
+
+def test_bug_018_body_only_function_mutation_flagged_in_untested_symbols(tmp_path: Path) -> None:
+    """BUG-018: A function whose implementation body changes without a signature change must still be tracked in untested_modified_symbols."""
+    repo = tmp_path / "body_mutation_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "billing.py").write_text(
+        "def charge_card(amount: int) -> int:\n    return amount\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial billing")
+    _git(repo, "tag", "v1.0")
+
+    # Mutate function body only (keep identical signature) and add no tests
+    (repo / "billing.py").write_text(
+        "def charge_card(amount: int) -> int:\n    return amount * 100\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "fix: multiply amount by 100")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    assert "charge_card" in report.untested_modified_symbols, (
+        f"Body-mutated function charge_card missed in untested_modified_symbols: {report.untested_modified_symbols}"
+    )
+
+
+def test_bug_019_empty_init_py_and_non_code_files_do_not_degrade_coverage(tmp_path: Path) -> None:
+    """BUG-019: 0-byte __init__.py files and hundreds of non-Python/TS files (.cu, .pxd, .yaml) must not degrade static_parse_coverage_pct."""
+    repo = tmp_path / "cuda_like_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    # Create 260 non-code files that sort before 'z_pkg/' alphabetically
+    c_dir = repo / "a_native"
+    c_dir.mkdir()
+    for i in range(260):
+        (c_dir / f"kernel_{i:03d}.cu").write_text("// CUDA kernel\n", encoding="utf-8")
+
+    pkg = repo / "z_pkg"
+    pkg.mkdir()
+    # Create an empty 0-byte __init__.py file
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "core.py").write_text("def launch(grid: int) -> None:\n    pass\n", encoding="utf-8")
+
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial cuda-like repo")
+    _git(repo, "tag", "v1.0")
+
+    (pkg / "core.py").write_text("def launch(grid: int, block: int) -> None:\n    pass\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: require block size")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    assert report.analysis_coverage.total_code_files_eligible == 2
+    assert report.analysis_coverage.files_parsed_successfully == 2
+    assert report.analysis_coverage.static_parse_coverage_pct == 100.0
+
+
+

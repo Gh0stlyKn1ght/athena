@@ -1,9 +1,9 @@
 {
   "summary": {
-    "total_scenarios": 12,
-    "passed_mode_a": 12,
+    "total_scenarios": 16,
+    "passed_mode_a": 16,
     "pass_rate_mode_a_pct": 100.0,
-    "engine": "Athena Static AST / Tree-sitter / Diff Engine"
+    "engine": "Athena Static AST + Hybrid Ollama (qwen2.5-coder:7b) Engine"
   },
   "scenarios": [
     {
@@ -18,7 +18,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 2,
-      "duration_ms": 5.75
+      "duration_ms": 5.36
     },
     {
       "scenario_id": "SCENARIO-02",
@@ -32,7 +32,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.37
+      "duration_ms": 0.31
     },
     {
       "scenario_id": "SCENARIO-03",
@@ -46,7 +46,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.33
+      "duration_ms": 0.28
     },
     {
       "scenario_id": "SCENARIO-04",
@@ -60,7 +60,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.23
+      "duration_ms": 0.24
     },
     {
       "scenario_id": "SCENARIO-05",
@@ -74,7 +74,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.22
+      "duration_ms": 0.25
     },
     {
       "scenario_id": "SCENARIO-06",
@@ -88,7 +88,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.3
+      "duration_ms": 0.35
     },
     {
       "scenario_id": "SCENARIO-07",
@@ -102,7 +102,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.14
+      "duration_ms": 0.17
     },
     {
       "scenario_id": "SCENARIO-08",
@@ -116,7 +116,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.24
+      "duration_ms": 0.36
     },
     {
       "scenario_id": "SCENARIO-09",
@@ -130,7 +130,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.22
+      "duration_ms": 0.3
     },
     {
       "scenario_id": "SCENARIO-10",
@@ -144,7 +144,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 0,
-      "duration_ms": 0.24
+      "duration_ms": 0.33
     },
     {
       "scenario_id": "SCENARIO-11",
@@ -158,7 +158,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 2,
-      "duration_ms": 921.98
+      "duration_ms": 1240.65
     },
     {
       "scenario_id": "SCENARIO-12",
@@ -172,7 +172,63 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 1418.09
+      "duration_ms": 1683.87
+    },
+    {
+      "scenario_id": "SCENARIO-13",
+      "scenario_name": "Public API Exposure Differentiation",
+      "description": "Distinguishes __all__ / __init__.py exported symbols (external risk) from _private module helpers.",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "create_token public=True (Explicitly exported in `__all__` of `pkg/api.py`); helper_fn public=False",
+      "detected_breaking_mode_b": null,
+      "pass_mode_b": null,
+      "mode_b_details": null,
+      "evidence_count": 2,
+      "duration_ms": 2444.86
+    },
+    {
+      "scenario_id": "SCENARIO-14",
+      "scenario_name": "Unresolved Dynamic Calls & Coverage Confidence",
+      "description": "Flags getattr/importlib/globals reflection and degrades blast-radius confidence score appropriately.",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "Detected 3 dynamic calls (['getattr_reflection', 'globals_locals_lookup', 'importlib_dynamic']); coverage=100.0%, confidence=medium",
+      "detected_breaking_mode_b": null,
+      "pass_mode_b": null,
+      "mode_b_details": null,
+      "evidence_count": 3,
+      "duration_ms": 2031.13
+    },
+    {
+      "scenario_id": "SCENARIO-15",
+      "scenario_name": "(str, Enum) to StrEnum Migration & Enum Member Removal",
+      "description": "Detects Python 3.11+ StrEnum formatting break (griffe#501) and removed Enum members.",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "Detected Enum breaking changes: Enum 'Status' base classes changed from ['str', 'Enum'] to ['StrEnum'] (griffe#501: str(member) formatting semantics change between (str, Enum) and StrEnum). | Removed Enum member(s) ['PENDING'] from 'Status'.",
+      "detected_breaking_mode_b": null,
+      "pass_mode_b": null,
+      "mode_b_details": null,
+      "evidence_count": 2,
+      "duration_ms": 0.99
+    },
+    {
+      "scenario_id": "SCENARIO-16",
+      "scenario_name": "Adversarial .gitconfig Immunity, Markdown Arity Drift & Hybrid Ollama",
+      "description": "Verifies diff.noprefix=true immunity, stale Markdown call arity detection, and qwen2.5-coder:7b hybrid pass.",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "Mode A: 1 breaking, 1 doc drift.",
+      "detected_breaking_mode_b": true,
+      "pass_mode_b": true,
+      "mode_b_details": "Mode B (ollama:qwen2.5-coder:7b): 1 breaking, 1 doc drift.",
+      "evidence_count": 3,
+      "duration_ms": 19750.12
     }
   ]
 }

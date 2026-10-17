@@ -110,6 +110,8 @@ class SymbolSignatureChange(BaseModel):
     old_signature: str | None = None
     new_signature: str | None = None
     is_breaking_candidate: bool = False
+    is_public_api_export: bool = False
+    public_api_exposure_reason: str = ""
     severity: Literal["high", "medium", "low"] = "medium"
     details: str = ""
     base_line_span: LineSpan | None = None
@@ -122,9 +124,50 @@ class CallerImpactItem(BaseModel):
 
     caller_file: str
     caller_symbol: str
+    enclosing_symbol: str | None = None
     line_number: int
     call_snippet: str
     resolution_confidence: Literal["exact_ast", "heuristic_name_match"] = "exact_ast"
+    arity_mismatch_detected: bool = False
+    mismatch_details: str = ""
+
+
+class UnresolvedDynamicCallItem(BaseModel):
+    """Dynamic dispatch, reflection, or eval pattern that static AST analysis cannot fully resolve."""
+
+    file_path: str
+    line_number: int
+    enclosing_symbol: str | None = None
+    pattern_kind: Literal[
+        "getattr_reflection",
+        "globals_locals_lookup",
+        "eval_exec_dynamic",
+        "importlib_dynamic",
+        "ts_bracket_dispatch",
+        "kwargs_passthrough",
+    ]
+    snippet: str
+    referenced_symbol_hint: str | None = None
+    risk_explanation: str
+
+
+class AnalysisCoverageReport(BaseModel):
+    """Explicit static analysis coverage and confidence boundary metrics for CI and PR review."""
+
+    total_repo_files_discovered: int = 0
+    total_code_files_eligible: int = 0
+    files_parsed_successfully: int = 0
+    files_skipped_or_unparseable: int = 0
+    static_parse_coverage_pct: float = 100.0
+    exact_ast_callers_count: int = 0
+    heuristic_callers_count: int = 0
+    callers_with_arity_mismatch_count: int = 0
+    unresolved_dynamic_calls_count: int = 0
+    public_api_exports_modified_count: int = 0
+    overall_blast_radius_confidence: ConfidenceLevel = "high"
+    confidence_rationale: str = (
+        "100% of eligible internal source files parsed statically with zero unresolved dynamic calls."
+    )
 
 
 class DocDriftItem(BaseModel):
@@ -196,10 +239,13 @@ class PotentialBreakingChangeFinding(BaseModel):
     change_kind: str
     old_signature: str | None = None
     new_signature: str | None = None
+    is_public_api_export: bool = False
+    public_api_exposure_reason: str = ""
     observed_facts: list[str] = Field(default_factory=list)
     model_interpretation: str = ""
     potential_risks_requiring_verification: list[str] = Field(default_factory=list)
     affected_callers: list[CallerImpactItem] = Field(default_factory=list)
+    unresolved_dynamic_calls: list[UnresolvedDynamicCallItem] = Field(default_factory=list)
     doc_drift: list[DocDriftItem] = Field(default_factory=list)
     evidence_ids: list[str] = Field(default_factory=list)
     evidence: list[EvidenceRecord] = Field(default_factory=list)
@@ -246,6 +292,8 @@ class GitHistoryAnalysisReport(BaseModel):
     stories: list[LogicalChangeStory] = Field(default_factory=list)
     symbol_changes: list[SymbolSignatureChange] = Field(default_factory=list)
     untested_modified_symbols: list[str] = Field(default_factory=list)
+    unresolved_dynamic_calls: list[UnresolvedDynamicCallItem] = Field(default_factory=list)
+    analysis_coverage: AnalysisCoverageReport = Field(default_factory=AnalysisCoverageReport)
     doc_drift: list[DocDriftItem] = Field(default_factory=list)
     evidence_registry: dict[str, EvidenceRecord] = Field(default_factory=dict)
     stripped_ungrounded_claims_count: int = 0
@@ -271,6 +319,8 @@ class BreakingChangeReport(BaseModel):
     total_potential_breaking_changes: int = 0
     potential_breaking_changes: list[PotentialBreakingChangeFinding] = Field(default_factory=list)
     untested_modified_symbols: list[str] = Field(default_factory=list)
+    unresolved_dynamic_calls: list[UnresolvedDynamicCallItem] = Field(default_factory=list)
+    analysis_coverage: AnalysisCoverageReport = Field(default_factory=AnalysisCoverageReport)
     doc_drift: list[DocDriftItem] = Field(default_factory=list)
     evidence_registry: dict[str, EvidenceRecord] = Field(default_factory=dict)
     stripped_ungrounded_claims_count: int = 0
@@ -300,6 +350,8 @@ class ReleaseNotesReport(BaseModel):
     release_summary: str = ""
     sections: list[ReleaseNotesSection] = Field(default_factory=list)
     potential_breaking_changes: list[PotentialBreakingChangeFinding] = Field(default_factory=list)
+    unresolved_dynamic_calls: list[UnresolvedDynamicCallItem] = Field(default_factory=list)
+    analysis_coverage: AnalysisCoverageReport = Field(default_factory=AnalysisCoverageReport)
     markdown: str = ""
     saved_to_file: str | None = None
     evidence_registry: dict[str, EvidenceRecord] = Field(default_factory=dict)

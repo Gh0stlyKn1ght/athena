@@ -85,7 +85,18 @@ def run_git_command(
     check: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     """Execute a read-only Git command with argument list (shell=False) and UTF-8 decoding."""
-    cmd = ["git", "-c", "core.quotePath=false", *args]
+    cmd = [
+        "git",
+        "-c",
+        "core.quotePath=false",
+        "-c",
+        "diff.noprefix=false",
+        "-c",
+        "diff.mnemonicPrefix=false",
+        "-c",
+        "color.ui=never",
+        *args,
+    ]
     proc = subprocess.run(
         cmd,
         cwd=str(repo_path),
@@ -156,7 +167,17 @@ def _parse_commits_log(repo_path: Path, rev_spec: str | list[str], max_count: in
     fmt2 = "==COMMIT_START==%n%H%x00%h%x00%an%x00%ae%x00%aI%x00%s%x00%b%x00==META_END=="
     proc2 = run_git_command(
         repo_path,
-        ["log", f"--max-count={max_count}", f"--format={fmt2}", "--numstat", "-m", "--first-parent", *rev_args, "--"],
+        [
+            "log",
+            "--no-show-signature",
+            f"--max-count={max_count}",
+            f"--format={fmt2}",
+            "--numstat",
+            "-m",
+            "--first-parent",
+            *rev_args,
+            "--",
+        ],
         check=False,
     )
     if proc2.returncode != 0 or not proc2.stdout.strip():
