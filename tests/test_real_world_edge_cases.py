@@ -752,4 +752,33 @@ def test_bug_019_empty_init_py_and_non_code_files_do_not_degrade_coverage(tmp_pa
     assert report.analysis_coverage.static_parse_coverage_pct == 100.0
 
 
+def test_bug_020_python_m_athena_module_execution(tmp_path: Path) -> None:
+    """BUG-020: Running `python -m athena inspect <repo>` must succeed via src/athena/__main__.py."""
+    import os
+    import sys
+
+    repo = tmp_path / "cli_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+    (repo / "app.py").write_text("x = 1\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: init")
+
+    env = dict(os.environ)
+    src_dir = str(Path(__file__).resolve().parents[1] / "src")
+    env["PYTHONPATH"] = src_dir + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    proc = subprocess.run(
+        [sys.executable, "-m", "athena", "inspect", str(repo)],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert proc.returncode == 0, f"python -m athena failed: {proc.stderr}"
+    assert '"is_valid_git_repo": true' in proc.stdout
+
+
+
 

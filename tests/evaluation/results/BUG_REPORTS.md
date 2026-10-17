@@ -1,8 +1,8 @@
-# Athena Formal Defect & Bug Resolution Reports (BUG-001 through BUG-019)
+# Athena Formal Defect & Bug Resolution Reports (BUG-001 through BUG-020)
 
 ## Overview
 
-During the implementation, adversarial edge-case stress-testing, and multi-commit evaluation of Athena across real-world repositories (including NVIDIA, enterprise finance libraries, and 10,000+ star ecosystems), nineteen critical engineering bugs and edge-case defects were identified, isolated, reproduced via automated tests, and permanently resolved in source code.
+During the implementation, adversarial edge-case stress-testing, and multi-commit evaluation of Athena across real-world repositories (including NVIDIA, enterprise finance libraries, and 10,000+ star ecosystems), twenty critical engineering bugs and edge-case defects were identified, isolated, reproduced via automated tests, and permanently resolved in source code.
 
 This document details the defect taxonomy, root cause analysis, reproducible test conditions, exact code modifications, and verification evidence for each defect.
 
@@ -469,5 +469,28 @@ Two compounding logic errors in `_scan_callers_and_tests_and_docs`:
 
 ### 4. Verification Evidence
 - Verified on live multi-commit evaluation of `encode/httpx`, `pallets/click`, and `NVIDIA/cuda-python`, and via `test_bug_019_empty_init_py_and_non_code_files_do_not_degrade_coverage` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-020: Missing `src/athena/__main__.py` Prevents Direct Package Execution via `python -m athena`
+
+- **Defect ID**: `BUG-020`
+- **Severity**: P1 (High / CLI & MCP Package Entrypoint Defect)
+- **Component**: `src/athena/__main__.py`
+- **Discovered In**: End-to-end CLI & GitHub Action (`python -m athena`) release verification
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+Running `python -m athena <subcommand>` (or configuring an MCP client with `"command": "python", "args": ["-m", "athena", "mcp"]`) failed with `No module named athena.__main__; 'athena' is a package and cannot be directly executed`.
+
+### 2. Root Cause Analysis
+While `src/athena/cli.py` implemented `main()` and `pyproject.toml` registered the `athena = "athena.cli:main"` console script, the package directory `src/athena/` lacked a `__main__.py` module required by Python's `-m` package runner.
+
+### 3. Engineering Fix
+Created `src/athena/__main__.py` delegating directly to `sys.exit(main())` from `athena.cli`.
+
+### 4. Verification Evidence
+- Verified via live execution of `python -m athena release-notes . --base c3c7965 --target HEAD --version v1.0.0 --audience developers --markdown-only` and `test_bug_020_python_m_athena_module_execution` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
 
 
