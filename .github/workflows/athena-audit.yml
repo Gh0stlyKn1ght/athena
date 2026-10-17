@@ -11,13 +11,13 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   test-and-verify:
-    name: Run Deterministic AST, Security & MCP Protocol Suite
+    name: Run Deterministic AST, Security & MCP Protocol Suite (Python 3.14)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout Repository (Full History for Git Revision Tests)
@@ -25,10 +25,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.14 (2026 Release)
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.14"
           cache: "pip"
 
       - name: Install Athena & Test Dependencies
@@ -43,7 +43,7 @@ jobs:
 
       - name: Run Unit, MCP Protocol & Real-World Edge-Case Tests
         run: |
-          pytest -v tests/test_athena_mvp.py tests/test_mcp_protocol.py tests/test_real_world_edge_cases.py
+          python -m pytest -v tests/test_athena_mvp.py tests/test_mcp_protocol.py tests/test_real_world_edge_cases.py
 
   pr-change-audit:
     name: Athena PR Breaking-Change & Blast-Radius Audit
@@ -56,10 +56,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.14 (2026 Release)
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
           cache: "pip"
 
       - name: Install Athena

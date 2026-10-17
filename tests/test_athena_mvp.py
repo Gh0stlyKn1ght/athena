@@ -510,7 +510,11 @@ def test_12_mcp_input_validation_and_secret_redaction(sample_git_repo: Path) -> 
 
 def test_14_live_ollama_qwen25_coder_7b_integration(sample_git_repo: Path) -> None:
     """Scenario 14: Live integration test against local Ollama qwen2.5-coder:7b."""
+    import os
+
     ready, reason = check_ollama_model_ready()
+    if not ready and os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+        pytest.skip(f"Skipping local Ollama GPU test on cloud GitHub Actions runner: {reason}")
     assert ready is True, f"Mandatory local model qwen2.5-coder:7b must be available in Ollama: {reason}"
 
     report = run_git_history_analysis(

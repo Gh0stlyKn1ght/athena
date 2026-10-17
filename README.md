@@ -76,7 +76,7 @@ flowchart TD
 
 ### Prerequisites
 
-- **Python**: `>= 3.10` (verified on Python `3.10`, `3.11`, `3.12`, and `3.14.3`)
+- **Python**: `>= 3.14` (2026 Python 3.14 release, verified on `3.14.3` / `3.14.8`)
 - **Git**: `>= 2.30` (verified on `git 2.53`)
 - *(Optional)* **Ollama**: Local Ollama server at `http://127.0.0.1:11434` with model `qwen2.5-coder:7b` (`dae161e27b0e`, ~4.7 GB) if Mode B is desired.
 

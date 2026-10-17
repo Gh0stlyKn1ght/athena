@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "athena-mcp"
-version = "0.1.0"
+version = "1.0.0"
 description = "Athena: Local-First, Evidence-Backed Git Intelligence, Breaking-Change, and Release Notes MCP Server"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "mcp>=1.2.0",
     "pydantic>=2.7.0",
