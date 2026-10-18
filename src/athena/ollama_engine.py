@@ -391,11 +391,12 @@ def analyze_changes_with_ollama(
         warnings.append("Optional 'httpx' dependency is not installed; used deterministic AST/diff fallback.")
         return det_stories, det_breaking, "fallback_deterministic", stripped_brk_init, warnings
 
-    ready, resolved_model, err_reason = resolve_ollama_model_name(base_url=base_url, model=model)
+    ready, err_reason = check_ollama_model_ready(base_url=base_url, model=model)
     if not ready:
         warnings.append(f"Ollama unavailable ({err_reason}); used deterministic AST/diff fallback.")
         return det_stories, det_breaking, "fallback_deterministic", stripped_brk_init, warnings
 
+    _, resolved_model, _ = resolve_ollama_model_name(base_url=base_url, model=model)
     is_gemma = resolved_model.lower().startswith("gemma")
     num_ctx = 1024 if is_gemma else 2048
     num_predict = 128 if is_gemma else 768
