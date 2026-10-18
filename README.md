@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Athena — Local-First Git & AST Intelligence" width="100%" />
+</p>
+
+<br />
+
 # Athena (`athena-mcp`)
 
 **Local-First, Evidence-Backed Git & AST Release-Readiness and Change-Intelligence MCP Server**
