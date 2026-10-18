@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Athena: Local-First, Evidence-Backed Git Intelligence, Breaking-Change, and Release Notes MCP Server"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "mcp>=1.2.0",
     "pydantic>=2.7.0",

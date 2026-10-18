@@ -10,13 +10,17 @@
 
 Athena is an open-source, local-first Model Context Protocol (MCP) server and developer CLI that delivers **verifiable, ground-truth code-change intelligence**. By combining deterministic Git diff analysis, Python Abstract Syntax Tree (`ast`) and TypeScript/JavaScript structural signature comparison, downstream caller blast-radius tracing, and documentation-drift detection, Athena eliminates the hallucination and superficiality of conventional AI release-note generators.
 
+<p align="center">
+  <img src="assets/athena-brag.gif" alt="Athena in Action — AST & Git Change Intelligence Showcase" width="100%" />
+</p>
+
 ---
 
 ## Key Differentiators
 
 1. **Deterministic-First Core (100% LLM-Independent)**: Athena works out-of-the box completely offline without Ollama, without an external AI API, and without any network connection. All Git inspections, AST symbol deltas, caller blast-radius graphs, doc-drift warnings, and release notes execute deterministically with 0ms LLM wait time.
 2. **Ground-Truth Evidence Citations**: Every reported change story and potential breaking change is bound to verified `EvidenceRecord` items containing the 40-character commit SHA, commit subject, file path, exact base/target line spans, unified diff hunk header/excerpt, and confidence rating.
-3. **AST Contract Differencing & Recursive Function Defect Analysis**: Athena ignores misleading Conventional Commit prefixes (e.g. `fix:` commit messages that actually introduce new public methods or break signatures). It analyzes parameter defaults, `None`-fallback body guards (`griffe#469`), return-type annotations, `(str, Enum)` <-> `StrEnum` migrations (`griffe#501`), Enum members, public constants, newly raised exceptions (`griffe#498`), and **recursive function bugs** (broken recursive self-call arity, unconditional infinite recursion without a base case, unqualified class-method self-recursion `NameError`s, and self-recursive caller blast radius).
+3. **AST Contract Differencing & Recursive Function Defect Analysis**: Athena ignores misleading Conventional Commit prefixes (e.g. `fix:` commit messages that actually introduce new public methods or break signatures). It analyzes parameter defaults, positional-parameter index shifts (`BUG-030`), `None`-fallback body guards (`griffe#469`), return-type annotations, `(str, Enum)` <-> `StrEnum` migrations (`griffe#501`), Enum members, public constants, newly raised exceptions (`griffe#498`), and **recursive function bugs** (broken recursive self-call arity, unconditional infinite recursion without a base case, unqualified class-method self-recursion `NameError`s, and self-recursive caller blast radius).
 4. **Public API Exposure Differentiation**: Automatically distinguishes symbols exported via `__all__`, package `__init__.py` re-exports, or TypeScript `export` declarations (`is_public_api_export=True`) from internal `_private` helper modules (`is_public_api_export=False`) so teams know when external package consumers are at risk even if internal callers look clean.
 5. **Unresolved Dynamic Dispatch Detection & Coverage Confidence Score**: Scans repository ASTs for reflection and dynamic invocation patterns (`getattr`, `hasattr`, `setattr`, `globals()`, `locals()`, `eval`, `exec`, `importlib.import_module`, and TypeScript bracket dispatch `obj[key]()`) and emits an explicit `AnalysisCoverageReport` (`static_parse_coverage_pct`, `unresolved_dynamic_calls_count`, `overall_blast_radius_confidence`) so CI and PR reviewers never get a false sense of security.
 6. **Three Resilient Operating Modes (Supporting `gemma:latest` / Gemma 7B & `qwen2.5-coder:7b`)**:
@@ -82,7 +86,7 @@ flowchart TD
 
 ### Prerequisites
 
-- **Python**: `>= 3.14` (2026 Python 3.14 release, verified on `3.14.3` / `3.14.8`)
+- **Python**: `>= 3.12` (verified on Python `3.12`, `3.13`, and `3.14`)
 - **Git**: `>= 2.30` (verified on `git 2.53`)
 - *(Optional)* **Ollama**: Local Ollama server at `http://127.0.0.1:11434` with `gemma:latest` (Gemma 7B, `a72c7f4d0a15`, ~5.0 GB) and/or `qwen2.5-coder:7b` (`dae161e27b0e`, ~4.7 GB) if Mode B is desired.
 
