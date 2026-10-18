@@ -34,3 +34,8 @@ pythonpath = ["src"]
 asyncio_mode = "auto"
 norecursedirs = ["cache", ".git", ".venv", "__pycache__", "build", "dist"]
 
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["tests/evaluation/cache", "examples/demo_repo", ".venv", "build", "dist", "**/__pycache__"]
+
+
