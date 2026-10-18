@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import re
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -16,7 +17,7 @@ from athena.git_inspector import (
 from athena.models import (
     AnalysisCoverageReport,
     CallerImpactItem,
-     ConfidenceLevel,
+    ConfidenceLevel,
     DocDriftItem,
     EvidenceRecord,
     LineSpan,
@@ -56,6 +57,10 @@ class _PySymbolInfo:
     body_ast_dump: str = ""
     is_public_export: bool = True
     export_reason: str = ""
+    is_recursive: bool = False
+    has_unconditional_recursion: bool = False
+    recursive_arity_mismatches: list[str] = field(default_factory=list)
+    unqualified_method_self_calls: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -69,12 +74,19 @@ class StructuralAnalysisResult:
     deterministic_breaking_findings: list[PotentialBreakingChangeFinding] = field(default_factory=list)
 
 
+def _parse_py_ast_quietly(source_code: str) -> ast.Module:
+    """Parse Python source into an AST while suppressing third-party SyntaxWarning noise."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", SyntaxWarning)
+        return ast.parse(source_code)
+
+
 def _unparse_safe(node: ast.AST | None) -> str | None:
     if node is None:
         return None
     try:
         return ast.unparse(node).strip()
-    except Exception:
+    except (Exception, RecursionError):
         return None
 
 
@@ -90,43 +102,49 @@ def _compute_body_ast_dump(func_node: ast.FunctionDef | ast.AsyncFunctionDef) ->
         stmts = stmts[1:]
     try:
         return "\n".join(ast.dump(s, include_attributes=False) for s in stmts)
-    except Exception:
+    except (Exception, RecursionError):
         return ""
 
 
 def _extract_raised_exceptions(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     """Detect explicitly raised exception class names inside a function body (griffe#498)."""
     raised: set[str] = set()
-    for child in ast.walk(func_node):
-        if isinstance(child, ast.Raise) and child.exc is not None:
-            if isinstance(child.exc, ast.Call):
-                exc_name = _unparse_safe(child.exc.func)
-                if exc_name:
-                    raised.add(exc_name.split(".")[-1])
-            elif isinstance(child.exc, ast.Name):
-                raised.add(child.exc.id)
+    try:
+        for child in ast.walk(func_node):
+            if isinstance(child, ast.Raise) and child.exc is not None:
+                if isinstance(child.exc, ast.Call):
+                    exc_name = _unparse_safe(child.exc.func)
+                    if exc_name:
+                        raised.add(exc_name.split(".")[-1])
+                elif isinstance(child.exc, ast.Name):
+                    raised.add(child.exc.id)
+    except RecursionError:
+        pass
     return raised
 
 
 def _extract_none_guarded_params(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     """Detect `if param is None:` or `param = param or ...` body guards (griffe#469)."""
     guarded: set[str] = set()
-    for child in ast.walk(func_node):
-        if isinstance(child, ast.Compare):
-            left_str = _unparse_safe(child.left)
-            for op, comp in zip(child.ops, child.comparators):
-                comp_str = _unparse_safe(comp)
-                if isinstance(op, (ast.Is, ast.Eq)):
-                    if comp_str == "None" and left_str:
-                        guarded.add(left_str)
-                    elif left_str == "None" and comp_str:
-                        guarded.add(comp_str)
-        elif isinstance(child, ast.Assign):
-            if isinstance(child.value, ast.BoolOp) and isinstance(child.value.op, ast.Or):
-                if child.value.values:
-                    first = _unparse_safe(child.value.values[0])
-                    if first:
-                        guarded.add(first)
+    try:
+        for child in ast.walk(func_node):
+            if isinstance(child, ast.Compare):
+                left_str = _unparse_safe(child.left)
+                for op, comp in zip(child.ops, child.comparators):
+                    comp_str = _unparse_safe(comp)
+                    if isinstance(op, (ast.Is, ast.Eq)):
+                        if comp_str == "None" and left_str:
+                            guarded.add(left_str)
+                        elif left_str == "None" and comp_str:
+                            guarded.add(comp_str)
+            elif isinstance(child, ast.Assign):
+                if isinstance(child.value, ast.BoolOp) and isinstance(child.value.op, ast.Or):
+                    if child.value.values:
+                        first = _unparse_safe(child.value.values[0])
+                        if first:
+                            guarded.add(first)
+    except RecursionError:
+        pass
     return guarded
 
 
@@ -297,6 +315,216 @@ def _is_enum_class(bases: list[str]) -> bool:
     return False
 
 
+def _extract_py_imports(tree: ast.AST) -> dict[str, str]:
+    """Extract imported symbols and modules mapping alias/name to full import source path."""
+    imports: dict[str, str] = {}
+    try:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    asname = alias.asname or alias.name
+                    imports[asname] = alias.name
+            elif isinstance(node, ast.ImportFrom):
+                mod = node.module or ""
+                for alias in node.names:
+                    asname = alias.asname or alias.name
+                    imports[asname] = f"{mod}.{alias.name}" if mod else alias.name
+    except RecursionError:
+        pass
+    return imports
+
+
+def _check_call_arity_mismatch(
+    call_node: ast.Call,
+    target_sym: _PySymbolInfo | None,
+    change_kind: str,
+) -> tuple[bool, str]:
+    """Verify whether an AST call site is incompatible with the target symbol's updated signature."""
+    if change_kind == "removed":
+        return True, "Symbol was removed in target revision; call site will raise NameError or AttributeError."
+    if target_sym is None or target_sym.symbol_kind not in ("function", "async_function", "method"):
+        return False, ""
+
+    has_starred = any(isinstance(a, ast.Starred) for a in call_node.args)
+    has_kwargs_unpack = any(kw.arg is None for kw in call_node.keywords)
+    pos_passed = len(call_node.args)
+    kw_passed = {kw.arg for kw in call_node.keywords if kw.arg is not None}
+
+    pos_params = [p for p in target_sym.params if p.kind in ("POSITIONAL_ONLY", "POSITIONAL_OR_KEYWORD")]
+    kw_only_params = [p for p in target_sym.params if p.kind == "KEYWORD_ONLY"]
+    has_varargs = any(p.kind == "VAR_POSITIONAL" for p in target_sym.params)
+    has_varkw = any(p.kind == "VAR_KEYWORD" for p in target_sym.params)
+
+    # Check too many positional arguments
+    if not has_varargs and not has_starred and pos_passed > len(pos_params):
+        return (
+            True,
+            f"Call passes {pos_passed} positional argument(s), but updated signature accepts at most {len(pos_params)}.",
+        )
+
+    # Check unknown keyword arguments
+    if not has_varkw and kw_passed:
+        valid_kw_names = {
+            p.name for p in target_sym.params if p.kind in ("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")
+        }
+        invalid_kw = sorted(kw_passed - valid_kw_names)
+        if invalid_kw:
+            return (
+                True,
+                f"Call passes unsupported/removed keyword argument(s) {invalid_kw} not in updated signature.",
+            )
+
+    # Check missing required parameters
+    if not has_starred and not has_kwargs_unpack:
+        missing_req: list[str] = []
+        for idx, p in enumerate(pos_params):
+            if not p.has_default:
+                satisfied_by_pos = idx < pos_passed
+                satisfied_by_kw = p.kind == "POSITIONAL_OR_KEYWORD" and p.name in kw_passed
+                if not (satisfied_by_pos or satisfied_by_kw):
+                    missing_req.append(p.name)
+        for p in kw_only_params:
+            if not p.has_default and p.name not in kw_passed:
+                missing_req.append(p.name)
+        if missing_req:
+            return (
+                True,
+                f"Call passes {pos_passed} positional arg(s) and keywords {sorted(kw_passed)}, missing required parameter(s) {missing_req}.",
+            )
+
+    return False, ""
+
+
+def _analyze_py_recursion_bugs(
+    func_node: ast.FunctionDef | ast.AsyncFunctionDef,
+    sym_info: _PySymbolInfo,
+    is_method: bool,
+    module_top_names: set[str],
+) -> None:
+    """Detect recursive self-calls, recursive arity mismatches, unqualified method self-reference, and infinite recursion without base case."""
+    stmts = list(func_node.body)
+    if (
+        stmts
+        and isinstance(stmts[0], ast.Expr)
+        and isinstance(stmts[0].value, ast.Constant)
+        and isinstance(stmts[0].value.value, str)
+    ):
+        stmts = stmts[1:]
+    if not stmts:
+        return
+
+    param_names = {p.name for p in sym_info.params}
+    local_store_names: set[str] = set(param_names) | {"self", "cls"}
+    has_yield = False
+
+    # Iterative stack traversal avoiding nested FunctionDef / ClassDef scopes
+    stack: list[ast.AST] = list(reversed(stmts))
+    body_calls: list[ast.Call] = []
+    while stack:
+        curr = stack.pop()
+        if isinstance(curr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            local_store_names.add(curr.name)
+            continue
+        if isinstance(curr, (ast.Yield, ast.YieldFrom)):
+            has_yield = True
+        if isinstance(curr, ast.Name) and isinstance(curr.ctx, ast.Store):
+            local_store_names.add(curr.id)
+        if isinstance(curr, ast.Call):
+            body_calls.append(curr)
+        try:
+            children = list(ast.iter_child_nodes(curr))
+            stack.extend(reversed(children))
+        except RecursionError:
+            break
+
+    def _is_direct_self_call(call_node: ast.Call) -> bool:
+        if not is_method:
+            return (
+                isinstance(call_node.func, ast.Name)
+                and call_node.func.id == sym_info.short_name
+                and sym_info.short_name not in param_names
+            )
+        return (
+            isinstance(call_node.func, ast.Attribute)
+            and isinstance(call_node.func.value, ast.Name)
+            and call_node.func.value.id in ("self", "cls")
+            and call_node.func.attr == sym_info.short_name
+        )
+
+    for call in body_calls:
+        lineno = getattr(call, "lineno", sym_info.start_line)
+        if _is_direct_self_call(call):
+            sym_info.is_recursive = True
+            arity_broken, mismatch_msg = _check_call_arity_mismatch(call, sym_info, "signature_changed")
+            if arity_broken:
+                sym_info.recursive_arity_mismatches.append(
+                    f"Recursive call to '{sym_info.qualified_name}' at line {lineno} has incompatible arguments ({mismatch_msg})"
+                )
+        elif (
+            is_method
+            and isinstance(call.func, ast.Name)
+            and call.func.id == sym_info.short_name
+            and sym_info.short_name not in ("__init__", "__call__")
+            and sym_info.short_name not in module_top_names
+            and sym_info.short_name not in local_store_names
+        ):
+            sym_info.is_recursive = True
+            sym_info.unqualified_method_self_calls.append(
+                f"Method '{sym_info.qualified_name}' calls bare '{sym_info.short_name}(...)' without 'self.' prefix at line {lineno} (will raise NameError at runtime)."
+            )
+
+    if not sym_info.is_recursive or has_yield:
+        return
+
+    # Check if a self-call is executed unconditionally prior to any conditional branch / base case
+    _GUARD_NODES = (
+        ast.If,
+        ast.Match,
+        ast.Try,
+        ast.While,
+        ast.For,
+        ast.AsyncFor,
+        ast.IfExp,
+        ast.BoolOp,
+        ast.Lambda,
+        ast.ListComp,
+        ast.SetComp,
+        ast.DictComp,
+        ast.GeneratorExp,
+        ast.FunctionDef,
+        ast.AsyncFunctionDef,
+        ast.ClassDef,
+    )
+
+    def _has_unguarded_self_call(root_node: ast.AST) -> bool:
+        sub_stack: list[ast.AST] = [root_node]
+        while sub_stack:
+            n = sub_stack.pop()
+            if isinstance(n, _GUARD_NODES):
+                continue
+            if isinstance(n, ast.Call) and _is_direct_self_call(n):
+                return True
+            sub_stack.extend(ast.iter_child_nodes(n))
+        return False
+
+    for stmt in stmts:
+        if isinstance(stmt, ast.If):
+            if _has_unguarded_self_call(stmt.test):
+                sym_info.has_unconditional_recursion = True
+            break
+        if isinstance(stmt, ast.Match):
+            if _has_unguarded_self_call(stmt.subject):
+                sym_info.has_unconditional_recursion = True
+            break
+        if isinstance(stmt, (ast.Try, ast.While, ast.For, ast.AsyncFor, ast.Raise)):
+            break
+        if _has_unguarded_self_call(stmt):
+            sym_info.has_unconditional_recursion = True
+            break
+        if isinstance(stmt, ast.Return):
+            break
+
+
 def _parse_python_symbols(
     source: str,
     file_path: str = "module.py",
@@ -304,11 +532,24 @@ def _parse_python_symbols(
 ) -> dict[str, _PySymbolInfo]:
     """Parse public Python functions, classes, methods, enums, and constants from source code."""
     try:
-        tree = ast.parse(source)
-    except SyntaxError:
+        tree = _parse_py_ast_quietly(source)
+    except (SyntaxError, RecursionError, MemoryError):
         return {}
 
     dunder_all = _extract_dunder_all(tree)
+    module_imports = _extract_py_imports(tree)
+    builtin_names = set(dir(__builtins__)) if isinstance(__builtins__, dict) else set(dir(__builtins__))
+    module_top_names: set[str] = set(module_imports.keys()) | builtin_names
+    for top_node in tree.body:
+        if isinstance(top_node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            module_top_names.add(top_node.name)
+        elif isinstance(top_node, ast.Assign):
+            for t in top_node.targets:
+                if isinstance(t, ast.Name):
+                    module_top_names.add(t.id)
+        elif isinstance(top_node, ast.AnnAssign) and isinstance(top_node.target, ast.Name):
+            module_top_names.add(top_node.target.id)
+
     symbols: dict[str, _PySymbolInfo] = {}
 
     for node in tree.body:
@@ -321,7 +562,7 @@ def _parse_python_symbols(
             ret = _unparse_safe(node.returns)
             sig = _format_py_signature(node.name, params, ret, decs, is_async=is_async)
             is_pub, pub_reason = _determine_py_export_exposure(node.name, file_path, dunder_all, init_reexports)
-            symbols[node.name] = _PySymbolInfo(
+            sym_obj = _PySymbolInfo(
                 qualified_name=node.name,
                 short_name=node.name,
                 symbol_kind="async_function" if is_async else "function",
@@ -337,6 +578,8 @@ def _parse_python_symbols(
                 is_public_export=is_pub,
                 export_reason=pub_reason,
             )
+            _analyze_py_recursion_bugs(node, sym_obj, is_method=False, module_top_names=module_top_names)
+            symbols[node.name] = sym_obj
         elif isinstance(node, ast.ClassDef):
             if node.name.startswith("_"):
                 continue
@@ -396,7 +639,7 @@ def _parse_python_symbols(
                             if any(d.endswith(".setter") for d in m_decs)
                             else f"{qname}.deleter"
                         )
-                        symbols[qname_sub] = _PySymbolInfo(
+                        sub_sym = _PySymbolInfo(
                             qualified_name=qname_sub,
                             short_name=f"{item.name}.setter",
                             symbol_kind="method",
@@ -412,9 +655,11 @@ def _parse_python_symbols(
                             is_public_export=is_pub,
                             export_reason=pub_reason,
                         )
+                        _analyze_py_recursion_bugs(item, sub_sym, is_method=not is_static, module_top_names=module_top_names)
+                        symbols[qname_sub] = sub_sym
                         continue
 
-                    symbols[qname] = _PySymbolInfo(
+                    m_sym = _PySymbolInfo(
                         qualified_name=qname,
                         short_name=item.name,
                         symbol_kind="method",
@@ -430,6 +675,8 @@ def _parse_python_symbols(
                         is_public_export=is_pub,
                         export_reason=pub_reason,
                     )
+                    _analyze_py_recursion_bugs(item, m_sym, is_method=not is_static, module_top_names=module_top_names)
+                    symbols[qname] = m_sym
         elif isinstance(node, ast.Assign):
             for t in node.targets:
                 if (
@@ -701,84 +948,38 @@ def _compare_python_symbol(
             )
         )
 
-    return findings
-
-
-def _extract_py_imports(tree: ast.AST) -> dict[str, str]:
-    """Extract imported symbols and modules mapping alias/name to full import source path."""
-    imports: dict[str, str] = {}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                asname = alias.asname or alias.name
-                imports[asname] = alias.name
-        elif isinstance(node, ast.ImportFrom):
-            mod = node.module or ""
-            for alias in node.names:
-                asname = alias.asname or alias.name
-                imports[asname] = f"{mod}.{alias.name}" if mod else alias.name
-    return imports
-
-
-def _check_call_arity_mismatch(
-    call_node: ast.Call,
-    target_sym: _PySymbolInfo | None,
-    change_kind: str,
-) -> tuple[bool, str]:
-    """Verify whether an AST call site is incompatible with the target symbol's updated signature."""
-    if change_kind == "removed":
-        return True, "Symbol was removed in target revision; call site will raise NameError or AttributeError."
-    if target_sym is None or target_sym.symbol_kind not in ("function", "async_function", "method"):
-        return False, ""
-
-    has_starred = any(isinstance(a, ast.Starred) for a in call_node.args)
-    has_kwargs_unpack = any(kw.arg is None for kw in call_node.keywords)
-    pos_passed = len(call_node.args)
-    kw_passed = {kw.arg for kw in call_node.keywords if kw.arg is not None}
-
-    pos_params = [p for p in target_sym.params if p.kind in ("POSITIONAL_ONLY", "POSITIONAL_OR_KEYWORD")]
-    kw_only_params = [p for p in target_sym.params if p.kind == "KEYWORD_ONLY"]
-    has_varargs = any(p.kind == "VAR_POSITIONAL" for p in target_sym.params)
-    has_varkw = any(p.kind == "VAR_KEYWORD" for p in target_sym.params)
-
-    # Check too many positional arguments
-    if not has_varargs and not has_starred and pos_passed > len(pos_params):
-        return (
-            True,
-            f"Call passes {pos_passed} positional argument(s), but updated signature accepts at most {len(pos_params)}.",
+    # Check recursive function bugs (gemma:latest AST bug patterns: wrong recursive arg, missing base case, unqualified method self-reference)
+    if new_sym.recursive_arity_mismatches:
+        findings.append(
+            (
+                "signature_changed",
+                True,
+                "high",
+                f"Recursive self-call bug in '{new_sym.qualified_name}': {new_sym.recursive_arity_mismatches[0]}",
+            )
         )
 
-    # Check unknown keyword arguments
-    if not has_varkw and kw_passed:
-        valid_kw_names = {
-            p.name for p in target_sym.params if p.kind in ("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")
-        }
-        invalid_kw = sorted(kw_passed - valid_kw_names)
-        if invalid_kw:
-            return (
+    if new_sym.has_unconditional_recursion and not old_sym.has_unconditional_recursion:
+        findings.append(
+            (
+                "exception_raised_added",
                 True,
-                f"Call passes unsupported/removed keyword argument(s) {invalid_kw} not in updated signature.",
+                "high",
+                f"Infinite recursion bug in '{new_sym.qualified_name}': recursive self-call executes unconditionally without a preceding base-case guard (will raise RecursionError).",
             )
+        )
 
-    # Check missing required parameters
-    if not has_starred and not has_kwargs_unpack:
-        missing_req: list[str] = []
-        for idx, p in enumerate(pos_params):
-            if not p.has_default:
-                satisfied_by_pos = idx < pos_passed
-                satisfied_by_kw = p.kind == "POSITIONAL_OR_KEYWORD" and p.name in kw_passed
-                if not (satisfied_by_pos or satisfied_by_kw):
-                    missing_req.append(p.name)
-        for p in kw_only_params:
-            if not p.has_default and p.name not in kw_passed:
-                missing_req.append(p.name)
-        if missing_req:
-            return (
+    if new_sym.unqualified_method_self_calls and not old_sym.unqualified_method_self_calls:
+        findings.append(
+            (
+                "exception_raised_added",
                 True,
-                f"Call passes {pos_passed} positional arg(s) and keywords {sorted(kw_passed)}, missing required parameter(s) {missing_req}.",
+                "high",
+                f"Incorrect self-reference in recursive method '{new_sym.qualified_name}': {new_sym.unqualified_method_self_calls[0]}",
             )
+        )
 
-    return False, ""
+    return findings
 
 
 _TS_EXPORT_FUNC_RE = re.compile(
@@ -1061,16 +1262,20 @@ def _scan_callers_and_tests_and_docs(
     new_py_map = new_py_symbols_by_qname or {}
 
     breaking_short_names: dict[str, str] = {}
+    breaking_qnames_by_short: dict[str, list[str]] = {}
     breaking_by_qname: dict[str, SymbolSignatureChange] = {}
+    sev_rank = {"high": 3, "medium": 2, "low": 1}
     for sc in symbol_changes:
         if sc.is_breaking_candidate:
             short = sc.symbol_name.split(".")[-1]
-            if short not in ("__init__", "__call__"):
-                breaking_short_names[short] = sc.symbol_name
-            else:
-                cls_name = sc.symbol_name.split(".")[0]
-                breaking_short_names[cls_name] = sc.symbol_name
-            breaking_by_qname[sc.symbol_name] = sc
+            key = short if short not in ("__init__", "__call__") else sc.symbol_name.split(".")[0]
+            breaking_short_names[key] = sc.symbol_name
+            qlist = breaking_qnames_by_short.setdefault(key, [])
+            if sc.symbol_name not in qlist:
+                qlist.append(sc.symbol_name)
+            existing = breaking_by_qname.get(sc.symbol_name)
+            if existing is None or sev_rank.get(sc.severity, 0) > sev_rank.get(existing.severity, 0):
+                breaking_by_qname[sc.symbol_name] = sc
 
     caller_impacts: dict[str, list[CallerImpactItem]] = {
         sc.symbol_name: [] for sc in symbol_changes if sc.is_breaking_candidate
@@ -1101,25 +1306,17 @@ def _scan_callers_and_tests_and_docs(
         # Read file content from target_blobs cache, working tree, or target git revision
         content = extraction.target_blobs.get(rel_path)
         if content is None:
-            if target_sha == "WORKING_TREE":
-                candidate = repo_path / rel_path
-                if candidate.exists() and candidate.is_file() and is_safe_repo_file(repo_path, candidate):
+            candidate = repo_path / rel_path
+            if candidate.exists() and candidate.is_file():
+                if is_safe_repo_file(repo_path, candidate):
                     try:
                         if candidate.stat().st_size <= 256 * 1024:
                             content = candidate.read_text(encoding="utf-8", errors="replace")
                     except OSError:
                         content = None
-            else:
-                # Try working tree fast-path first if file was not modified since target_sha, fallback to git cat-file/show
-                candidate = repo_path / rel_path
-                if candidate.exists() and candidate.is_file() and is_safe_repo_file(repo_path, candidate):
-                    try:
-                        if candidate.stat().st_size <= 256 * 1024:
-                            content = candidate.read_text(encoding="utf-8", errors="replace")
-                    except OSError:
-                        content = None
-                if content is None:
-                    content = read_blob_at_revision(repo_path, target_sha, rel_path)
+            elif target_sha != "WORKING_TREE" and extraction.target_ref.strip().upper() != "HEAD":
+                # Only spawn git cat-file/show when analyzing a non-HEAD historical revision where file was deleted in working tree (BUG-015 / BUG-029)
+                content = read_blob_at_revision(repo_path, target_sha, rel_path)
 
         if content is None:
             if is_py or is_ts:
@@ -1137,7 +1334,7 @@ def _scan_callers_and_tests_and_docs(
 
         if is_py:
             try:
-                tree = ast.parse(content)
+                tree = _parse_py_ast_quietly(content)
                 files_parsed_ok += 1
                 lines = content.splitlines()
                 line_map = _build_line_to_enclosing_symbol(tree)
@@ -1149,68 +1346,78 @@ def _scan_callers_and_tests_and_docs(
                     )
                     unresolved_dynamic_calls.extend(dyn_found[: 25 - len(unresolved_dynamic_calls)])
 
-                if breaking_short_names:
+                if breaking_qnames_by_short:
                     file_imports = _extract_py_imports(tree)
                     for node in ast.walk(tree):
                         if isinstance(node, ast.Call):
                             callee_name: str | None = None
                             is_attr_call = False
+                            attr_receiver: str | None = None
                             if isinstance(node.func, ast.Name):
                                 callee_name = node.func.id
                             elif isinstance(node.func, ast.Attribute):
                                 callee_name = node.func.attr
                                 is_attr_call = True
+                                if isinstance(node.func.value, ast.Name):
+                                    attr_receiver = node.func.value.id
                             target_short_name: str | None = None
-                            if callee_name and callee_name in breaking_short_names:
+                            if callee_name and callee_name in breaking_qnames_by_short:
                                 target_short_name = callee_name
                             elif callee_name and callee_name in file_imports:
                                 imported_target = file_imports[callee_name].split(".")[-1]
-                                if imported_target in breaking_short_names:
+                                if imported_target in breaking_qnames_by_short:
                                     target_short_name = imported_target
 
                             if target_short_name:
-                                qname = breaking_short_names[target_short_name]
-                                sc_obj = breaking_by_qname[qname]
+                                candidate_qnames = breaking_qnames_by_short[target_short_name]
                                 lineno = getattr(node, "lineno", 1)
-                                if (
-                                    rel_path == sc_obj.file_path
-                                    and sc_obj.target_line_span
-                                    and sc_obj.target_line_span.start_line <= lineno <= sc_obj.target_line_span.end_line
-                                ):
-                                    continue
-                                snippet = lines[lineno - 1].strip() if 1 <= lineno <= len(lines) else callee_name
-                                def_mod_stem = Path(sc_obj.file_path).stem
-                                has_explicit_import = (callee_name in file_imports) or any(
-                                    def_mod_stem in v for v in file_imports.values()
-                                )
-                                # If calling .method() on an arbitrary receiver without importing the module, classify as heuristic
-                                if rel_path == sc_obj.file_path or (has_explicit_import and not is_attr_call):
-                                    conf_level = "exact_ast"
-                                elif has_explicit_import and is_attr_call:
-                                    conf_level = "exact_ast"
-                                else:
-                                    conf_level = "heuristic_name_match"
-
-                                arity_broken, mismatch_msg = _check_call_arity_mismatch(
-                                    node,
-                                    new_py_map.get(qname),
-                                    sc_obj.change_kind,
-                                )
                                 enclosing = line_map.get(lineno)
-                                if len(caller_impacts.get(qname, [])) < 10:
-                                    caller_impacts.setdefault(qname, []).append(
-                                        CallerImpactItem(
-                                            caller_file=rel_path,
-                                            caller_symbol=callee_name or target_short_name,
-                                            enclosing_symbol=enclosing,
-                                            line_number=lineno,
-                                            call_snippet=snippet[:160],
-                                            resolution_confidence=conf_level,
-                                            arity_mismatch_detected=arity_broken,
-                                            mismatch_details=mismatch_msg,
-                                        )
+
+                                # Narrow candidate_qnames if call is a self/cls call inside a specific class
+                                matched_qnames = candidate_qnames
+                                if len(candidate_qnames) > 1 and enclosing and "." in enclosing:
+                                    enc_cls = enclosing.split(".")[0]
+                                    if attr_receiver in ("self", "cls", enc_cls):
+                                        cls_specific = [q for q in candidate_qnames if q.startswith(f"{enc_cls}.")]
+                                        if cls_specific:
+                                            matched_qnames = cls_specific
+
+                                for qname in matched_qnames:
+                                    sc_obj = breaking_by_qname[qname]
+                                    # Note (BUG-021): Do NOT skip calls inside `start_line..end_line` of `sc_obj`,
+                                    # because recursive self-calls inside the function body are genuine call sites
+                                    # that can break when the function's own signature changes!
+                                    snippet = lines[lineno - 1].strip() if 1 <= lineno <= len(lines) else (callee_name or target_short_name)
+                                    def_mod_stem = Path(sc_obj.file_path).stem
+                                    has_explicit_import = (callee_name in file_imports) or any(
+                                        def_mod_stem in v for v in file_imports.values()
                                     )
-            except SyntaxError:
+                                    if rel_path == sc_obj.file_path or (has_explicit_import and not is_attr_call):
+                                        conf_level = "exact_ast"
+                                    elif has_explicit_import and is_attr_call:
+                                        conf_level = "exact_ast"
+                                    else:
+                                        conf_level = "heuristic_name_match"
+
+                                    arity_broken, mismatch_msg = _check_call_arity_mismatch(
+                                        node,
+                                        new_py_map.get(qname),
+                                        sc_obj.change_kind,
+                                    )
+                                    if len(caller_impacts.get(qname, [])) < 10:
+                                        caller_impacts.setdefault(qname, []).append(
+                                            CallerImpactItem(
+                                                caller_file=rel_path,
+                                                caller_symbol=callee_name or target_short_name,
+                                                enclosing_symbol=enclosing,
+                                                line_number=lineno,
+                                                call_snippet=snippet[:160],
+                                                resolution_confidence=conf_level,
+                                                arity_mismatch_detected=arity_broken,
+                                                mismatch_details=mismatch_msg,
+                                            )
+                                        )
+            except (SyntaxError, RecursionError, MemoryError):
                 files_skipped_or_err += 1
 
         elif is_ts:
@@ -1236,80 +1443,82 @@ def _scan_callers_and_tests_and_docs(
                         if len(unresolved_dynamic_calls) >= 25:
                             break
 
-            if breaking_short_names:
-                for short_n, qname in breaking_short_names.items():
-                    sc_obj = breaking_by_qname[qname]
-                    for idx, line in enumerate(lines, start=1):
-                        if (
-                            rel_path == sc_obj.file_path
-                            and sc_obj.target_line_span
-                            and sc_obj.target_line_span.start_line == idx
-                        ):
-                            continue
-                        if re.search(rf"\b{re.escape(short_n)}\s*\(", line):
-                            if len(caller_impacts.get(qname, [])) < 10:
-                                caller_impacts.setdefault(qname, []).append(
-                                    CallerImpactItem(
-                                        caller_file=rel_path,
-                                        caller_symbol=short_n,
-                                        line_number=idx,
-                                        call_snippet=line.strip()[:160],
-                                        resolution_confidence="heuristic_name_match",
+            if breaking_qnames_by_short:
+                for short_n, qnames in breaking_qnames_by_short.items():
+                    for qname in qnames:
+                        sc_obj = breaking_by_qname[qname]
+                        for idx, line in enumerate(lines, start=1):
+                            if (
+                                rel_path == sc_obj.file_path
+                                and sc_obj.target_line_span
+                                and sc_obj.target_line_span.start_line == idx
+                            ):
+                                continue
+                            if re.search(rf"\b{re.escape(short_n)}\s*\(", line):
+                                if len(caller_impacts.get(qname, [])) < 10:
+                                    caller_impacts.setdefault(qname, []).append(
+                                        CallerImpactItem(
+                                            caller_file=rel_path,
+                                            caller_symbol=short_n,
+                                            line_number=idx,
+                                            call_snippet=line.strip()[:160],
+                                            resolution_confidence="heuristic_name_match",
+                                        )
                                     )
-                                )
 
-        elif is_md and breaking_short_names:
+        elif is_md and breaking_qnames_by_short:
             lines = content.splitlines()
-            for short_n, qname in breaking_short_names.items():
-                sc_obj = breaking_by_qname[qname]
-                target_py_sym = new_py_map.get(qname)
-                min_req_args = (
-                    sum(
-                        1
-                        for p in target_py_sym.params
-                        if not p.has_default and p.kind not in ("VAR_POSITIONAL", "VAR_KEYWORD")
-                    )
-                    if target_py_sym
-                    else None
-                )
-                for idx, line in enumerate(lines, start=1):
-                    has_call = bool(re.search(rf"\b{re.escape(short_n)}\s*\(", line))
-                    has_backtick = f"`{short_n}`" in line or f"`{qname}`" in line
-                    if not (has_call or has_backtick):
-                        continue
-
-                    call_arg_cnt = _count_call_args_in_text(line, short_n) if has_call else None
-                    arity_stale = (
-                        call_arg_cnt is not None
-                        and min_req_args is not None
-                        and call_arg_cnt < min_req_args
-                    )
-
-                    # Flag if:
-                    # 1. Symbol was completely removed, OR
-                    # 2. Call in Markdown explicitly passes fewer arguments than the new required signature (even if doc file was edited elsewhere!), OR
-                    # 3. Doc file was not modified in the commit range while symbol signature broke
-                    if sc_obj.change_kind == "removed" or arity_stale or (rel_path not in changed_doc_paths):
-                        ev_id = sc_obj.evidence_ids[0] if sc_obj.evidence_ids else None
-                        arity_note = (
-                            f" Example passes {call_arg_cnt} argument(s), but updated signature requires at least {min_req_args}."
-                            if arity_stale
-                            else ""
+            for short_n, qnames in breaking_qnames_by_short.items():
+                for qname in qnames:
+                    sc_obj = breaking_by_qname[qname]
+                    target_py_sym = new_py_map.get(qname)
+                    min_req_args = (
+                        sum(
+                            1
+                            for p in target_py_sym.params
+                            if not p.has_default and p.kind not in ("VAR_POSITIONAL", "VAR_KEYWORD")
                         )
-                        doc_drift_items.append(
-                            DocDriftItem(
-                                doc_file=rel_path,
-                                line_number=idx,
-                                referenced_symbol=qname,
-                                snippet=line.strip()[:160],
-                                drift_reason=(
-                                    f"Documentation in '{rel_path}:{idx}' references '{short_n}', "
-                                    f"whose signature/availability changed ({sc_obj.change_kind}: {sc_obj.details}).{arity_note}"
-                                ),
-                                evidence_ids=[ev_id] if ev_id else [],
+                        if target_py_sym
+                        else None
+                    )
+                    for idx, line in enumerate(lines, start=1):
+                        has_call = bool(re.search(rf"\b{re.escape(short_n)}\s*\(", line))
+                        has_backtick = f"`{short_n}`" in line or f"`{qname}`" in line
+                        if not (has_call or has_backtick):
+                            continue
+
+                        call_arg_cnt = _count_call_args_in_text(line, short_n) if has_call else None
+                        arity_stale = (
+                            call_arg_cnt is not None
+                            and min_req_args is not None
+                            and call_arg_cnt < min_req_args
+                        )
+
+                        # Flag if:
+                        # 1. Symbol was completely removed, OR
+                        # 2. Call in Markdown explicitly passes fewer arguments than the new required signature (even if doc file was edited elsewhere!), OR
+                        # 3. Doc file was not modified in the commit range while symbol signature broke
+                        if sc_obj.change_kind == "removed" or arity_stale or (rel_path not in changed_doc_paths):
+                            ev_id = sc_obj.evidence_ids[0] if sc_obj.evidence_ids else None
+                            arity_note = (
+                                f" Example passes {call_arg_cnt} argument(s), but updated signature requires at least {min_req_args}."
+                                if arity_stale
+                                else ""
                             )
-                        )
-                        break
+                            doc_drift_items.append(
+                                DocDriftItem(
+                                    doc_file=rel_path,
+                                    line_number=idx,
+                                    referenced_symbol=qname,
+                                    snippet=line.strip()[:160],
+                                    drift_reason=(
+                                        f"Documentation in '{rel_path}:{idx}' references '{short_n}', "
+                                        f"whose signature/availability changed ({sc_obj.change_kind}: {sc_obj.details}).{arity_note}"
+                                    ),
+                                    evidence_ids=[ev_id] if ev_id else [],
+                                )
+                            )
+                            break
 
     # Account for code files beyond the max_scan_files cap if repo is huge
     if len(eligible_scan_files) > max_scan_files:
@@ -1394,7 +1603,7 @@ def _collect_init_reexports(extraction: RawRangeExtraction) -> set[str]:
     for path_key, blob in {**extraction.base_blobs, **extraction.target_blobs}.items():
         if path_key.endswith("__init__.py") and blob:
             try:
-                tree = ast.parse(blob)
+                tree = _parse_py_ast_quietly(blob)
                 dunder = _extract_dunder_all(tree)
                 if dunder:
                     reexported.update(dunder)
@@ -1402,9 +1611,45 @@ def _collect_init_reexports(extraction: RawRangeExtraction) -> set[str]:
                     if isinstance(node, ast.ImportFrom):
                         for alias in node.names:
                             reexported.add(alias.asname or alias.name)
-            except SyntaxError:
+            except (SyntaxError, RecursionError, MemoryError):
                 pass
     return reexported
+
+
+def _build_added_symbol_recursion_issues(fpath: str, new_s: _PySymbolInfo) -> list[tuple[str, bool, str, str]]:
+    """Return high-severity behavioral/signature findings if a newly added function contains recursion defects."""
+    issues: list[tuple[str, bool, str, str]] = []
+    if new_s.recursive_arity_mismatches:
+        issues.append(
+            (
+                "signature_changed",
+                True,
+                "high",
+                f"Broken recursive self-call in `{new_s.qualified_name}` ({fpath}): "
+                + "; ".join(new_s.recursive_arity_mismatches),
+            )
+        )
+    if new_s.has_unconditional_recursion:
+        issues.append(
+            (
+                "behavior_changed",
+                True,
+                "high",
+                f"Unconditional infinite recursion in `{new_s.qualified_name}` ({fpath}): "
+                "recursive function invokes itself without any conditional base-case branch or termination guard, guaranteeing `RecursionError` at runtime.",
+            )
+        )
+    if new_s.unqualified_method_self_calls:
+        issues.append(
+            (
+                "behavior_changed",
+                True,
+                "high",
+                f"Broken method self-recursion in `{new_s.qualified_name}` ({fpath}): "
+                + "; ".join(new_s.unqualified_method_self_calls),
+            )
+        )
+    return issues
 
 
 def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAnalysisResult:
@@ -1526,6 +1771,33 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
                     symbol_changes.append(sc)
                     fdelta.symbol_changes.append(sc)
                     modified_symbol_names.add(qname)
+
+                    for rec_kind, rec_brk, rec_sev, rec_details in _build_added_symbol_recursion_issues(fpath, new_s):
+                        rec_eid = _register_symbol_evidence(
+                            fpath,
+                            None,
+                            t_span,
+                            f"+ {new_s.signature_str}",
+                            rec_details,
+                        )
+                        rec_sc = SymbolSignatureChange(
+                            file_path=fpath,
+                            symbol_name=qname,
+                            symbol_kind=new_s.symbol_kind,  # type: ignore[arg-type]
+                            change_kind=rec_kind,  # type: ignore[arg-type]
+                            old_signature=None,
+                            new_signature=new_s.signature_str,
+                            is_breaking_candidate=rec_brk,
+                            is_public_api_export=new_s.is_public_export,
+                            public_api_exposure_reason=new_s.export_reason,
+                            severity=rec_sev,  # type: ignore[arg-type]
+                            details=rec_details,
+                            base_line_span=None,
+                            target_line_span=t_span,
+                            evidence_ids=[rec_eid, *fdelta.evidence_ids[:1]],
+                        )
+                        symbol_changes.append(rec_sc)
+                        fdelta.symbol_changes.append(rec_sc)
 
             # 3. Modified symbols
             for qname in old_syms.keys() & new_syms.keys():
@@ -1849,6 +2121,25 @@ def analyze_python_module_diff(
                 evidence_ids=[],
             )
             symbol_changes.append(sc)
+            for rec_kind, rec_brk, rec_sev, rec_details in _build_added_symbol_recursion_issues(file_path, new_s):
+                symbol_changes.append(
+                    SymbolSignatureChange(
+                        file_path=file_path,
+                        symbol_name=qname,
+                        symbol_kind=new_s.symbol_kind,  # type: ignore[arg-type]
+                        change_kind=rec_kind,  # type: ignore[arg-type]
+                        old_signature=None,
+                        new_signature=new_s.signature_str,
+                        is_breaking_candidate=rec_brk,
+                        is_public_api_export=new_s.is_public_export,
+                        public_api_exposure_reason=new_s.export_reason,
+                        severity=rec_sev,  # type: ignore[arg-type]
+                        details=rec_details,
+                        base_line_span=None,
+                        target_line_span=t_span,
+                        evidence_ids=[],
+                    )
+                )
 
     # 3. Modified symbols
     for qname in old_syms.keys() & new_syms.keys():

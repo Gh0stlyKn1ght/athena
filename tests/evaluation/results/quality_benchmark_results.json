@@ -1,9 +1,9 @@
 {
   "summary": {
-    "total_scenarios": 16,
-    "passed_mode_a": 16,
+    "total_scenarios": 19,
+    "passed_mode_a": 19,
     "pass_rate_mode_a_pct": 100.0,
-    "engine": "Athena Static AST + Hybrid Ollama (qwen2.5-coder:7b) Engine"
+    "engine": "Athena Static AST + Hybrid Ollama (qwen2.5-coder:7b & gemma:latest) Engine"
   },
   "scenarios": [
     {
@@ -18,7 +18,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 2,
-      "duration_ms": 5.36
+      "duration_ms": 5.7
     },
     {
       "scenario_id": "SCENARIO-02",
@@ -46,7 +46,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.28
+      "duration_ms": 0.32
     },
     {
       "scenario_id": "SCENARIO-04",
@@ -60,7 +60,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.24
+      "duration_ms": 0.31
     },
     {
       "scenario_id": "SCENARIO-05",
@@ -74,7 +74,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.25
+      "duration_ms": 0.41
     },
     {
       "scenario_id": "SCENARIO-06",
@@ -88,7 +88,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.35
+      "duration_ms": 0.47
     },
     {
       "scenario_id": "SCENARIO-07",
@@ -102,7 +102,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.17
+      "duration_ms": 0.22
     },
     {
       "scenario_id": "SCENARIO-08",
@@ -116,7 +116,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.36
+      "duration_ms": 0.35
     },
     {
       "scenario_id": "SCENARIO-09",
@@ -130,7 +130,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 0.3
+      "duration_ms": 0.64
     },
     {
       "scenario_id": "SCENARIO-10",
@@ -144,7 +144,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 0,
-      "duration_ms": 0.33
+      "duration_ms": 0.49
     },
     {
       "scenario_id": "SCENARIO-11",
@@ -158,7 +158,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 2,
-      "duration_ms": 1240.65
+      "duration_ms": 890.14
     },
     {
       "scenario_id": "SCENARIO-12",
@@ -172,7 +172,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 1,
-      "duration_ms": 1683.87
+      "duration_ms": 1078.34
     },
     {
       "scenario_id": "SCENARIO-13",
@@ -186,7 +186,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 2,
-      "duration_ms": 2444.86
+      "duration_ms": 1764.56
     },
     {
       "scenario_id": "SCENARIO-14",
@@ -200,7 +200,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 3,
-      "duration_ms": 2031.13
+      "duration_ms": 1375.88
     },
     {
       "scenario_id": "SCENARIO-15",
@@ -214,7 +214,7 @@
       "pass_mode_b": null,
       "mode_b_details": null,
       "evidence_count": 2,
-      "duration_ms": 0.99
+      "duration_ms": 0.47
     },
     {
       "scenario_id": "SCENARIO-16",
@@ -228,7 +228,49 @@
       "pass_mode_b": true,
       "mode_b_details": "Mode B (ollama:qwen2.5-coder:7b): 1 breaking, 1 doc drift.",
       "evidence_count": 3,
-      "duration_ms": 19750.12
+      "duration_ms": 41737.18
+    },
+    {
+      "scenario_id": "SCENARIO-17",
+      "scenario_name": "Recursive Function Broken Self-Call Arity & Self-Caller Blast Radius",
+      "description": "Detects when a recursive function adds a required parameter but fails to update its own recursive call site.",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "Detected 3 breaking finding(s); recursive self-caller arity_mismatch_detected=True",
+      "detected_breaking_mode_b": null,
+      "pass_mode_b": null,
+      "mode_b_details": null,
+      "evidence_count": 4,
+      "duration_ms": 1575.87
+    },
+    {
+      "scenario_id": "SCENARIO-18",
+      "scenario_name": "Unconditional Infinite Recursion & Unqualified Method Self-Recursion",
+      "description": "Flags missing base-case infinite recursion (RecursionError) and unqualified method self-calls (NameError).",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "Flagged recursive defects on symbols: ['Walker.step', 'search_depth']",
+      "detected_breaking_mode_b": null,
+      "pass_mode_b": null,
+      "mode_b_details": null,
+      "evidence_count": 3,
+      "duration_ms": 1372.39
+    },
+    {
+      "scenario_id": "SCENARIO-19",
+      "scenario_name": "Local Ollama Gemma 7B (gemma:latest) Hybrid Recursive Diff Synthesis",
+      "description": "Verifies gemma:7b -> gemma:latest tag resolution, VRAM-safe context window, and citation verification.",
+      "expected_breaking": true,
+      "detected_breaking_mode_a": true,
+      "pass_mode_a": true,
+      "mode_a_details": "Mode A: 1 breaking finding(s) on `factorial`.",
+      "detected_breaking_mode_b": true,
+      "pass_mode_b": true,
+      "mode_b_details": "Mode B (ollama:gemma:latest): 1 breaking finding(s), warnings=0.",
+      "evidence_count": 2,
+      "duration_ms": 83176.23
     }
   ]
 }

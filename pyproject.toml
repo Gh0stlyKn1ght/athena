@@ -32,3 +32,5 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 asyncio_mode = "auto"
+norecursedirs = ["cache", ".git", ".venv", "__pycache__", "build", "dist"]
+

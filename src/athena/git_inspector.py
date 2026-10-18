@@ -81,7 +81,7 @@ class RawRangeExtraction:
 def run_git_command(
     repo_path: Path,
     args: list[str],
-    timeout: int = 15,
+    timeout: int = 30,
     check: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     """Execute a read-only Git command with argument list (shell=False) and UTF-8 decoding."""
@@ -97,16 +97,25 @@ def run_git_command(
         "color.ui=never",
         *args,
     ]
-    proc = subprocess.run(
-        cmd,
-        cwd=str(repo_path),
-        shell=False,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(repo_path),
+            shell=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        if check:
+            raise AthenaValidationError(
+                "GIT_COMMAND_TIMEOUT",
+                f"Git command timed out after {timeout}s ({' '.join(args[:3])}).",
+            )
+        return subprocess.CompletedProcess(cmd, returncode=124, stdout="", stderr=f"Timed out after {timeout}s")
+
     if check and proc.returncode != 0:
         stderr_clean = (proc.stderr or proc.stdout or "").strip()
         raise AthenaValidationError(
@@ -159,12 +168,20 @@ def _parse_conventional_commit(subject: str, body: str) -> tuple[str | None, str
     return conv_type, conv_scope, breaking
 
 
+def _is_promisor_partial_clone(repo_path: Path) -> bool:
+    """Detect whether the repository is a partial/blobless clone (`--filter=blob:none`)."""
+    proc = run_git_command(repo_path, ["config", "--get", "remote.origin.promisor"], timeout=3, check=False)
+    return proc.returncode == 0 and proc.stdout.strip().lower() == "true"
+
+
 def _parse_commits_log(repo_path: Path, rev_spec: str | list[str], max_count: int = 50) -> list[CommitSummaryItem]:
-    """Parse git log with NUL-delimited fields and numstat per commit."""
+    """Parse git log with NUL-delimited fields and numstat (or tree-only name-only on blobless clones) per commit."""
     rev_args = [rev_spec] if isinstance(rev_spec, str) else list(rev_spec)
     commits: list[CommitSummaryItem] = []
 
     fmt2 = "==COMMIT_START==%n%H%x00%h%x00%an%x00%ae%x00%aI%x00%s%x00%b%x00==META_END=="
+    is_partial = _is_promisor_partial_clone(repo_path)
+    stat_flag = "--name-only" if is_partial else "--numstat"
     proc2 = run_git_command(
         repo_path,
         [
@@ -172,14 +189,33 @@ def _parse_commits_log(repo_path: Path, rev_spec: str | list[str], max_count: in
             "--no-show-signature",
             f"--max-count={max_count}",
             f"--format={fmt2}",
-            "--numstat",
+            stat_flag,
             "-m",
             "--first-parent",
             *rev_args,
             "--",
         ],
+        timeout=15 if not is_partial else 20,
         check=False,
     )
+    if (proc2.returncode != 0 or not proc2.stdout.strip()) and not is_partial:
+        # Fallback to tree-only --name-only if --numstat timed out on a massive commit range (BUG-028)
+        proc2 = run_git_command(
+            repo_path,
+            [
+                "log",
+                "--no-show-signature",
+                f"--max-count={max_count}",
+                f"--format={fmt2}",
+                "--name-only",
+                "-m",
+                "--first-parent",
+                *rev_args,
+                "--",
+            ],
+            timeout=20,
+            check=False,
+        )
     if proc2.returncode != 0 or not proc2.stdout.strip():
         return []
 
@@ -203,6 +239,9 @@ def _parse_commits_log(repo_path: Path, rev_spec: str | list[str], max_count: in
         insertions = 0
         deletions = 0
         for line in stat_part.strip().splitlines():
+            line_s = line.strip()
+            if not line_s:
+                continue
             parts = line.split("\t")
             if len(parts) >= 3:
                 ins_str, del_str, fpath = parts[0], parts[1], parts[2]
@@ -211,6 +250,8 @@ def _parse_commits_log(repo_path: Path, rev_spec: str | list[str], max_count: in
                 if del_str.isdigit():
                     deletions += int(del_str)
                 changed_files.append(fpath.strip())
+            else:
+                changed_files.append(line_s)
         c_type, c_scope, is_brk = _parse_conventional_commit(subj, body)
         commits.append(
             CommitSummaryItem(
@@ -538,40 +579,70 @@ def extract_revision_range_data(
     latest_commit_hash = commits[0].commit_hash if commits else (target_sha if target_sha != "WORKING_TREE" else base_sha)
     latest_commit_msg = commits[0].subject if commits else "Working tree or direct revision comparison"
 
-    # Extract file statuses
+    # Extract file statuses (omit -M on partial/blobless clones so Git performs a 100% local tree comparison without fetching blobs for rename similarity!)
+    is_partial = _is_promisor_partial_clone(repo_path)
     diff_target_args = [base_sha] if target_sha == "WORKING_TREE" else [base_sha, target_sha]
+    ns_flags = ["--name-status", "--no-ext-diff", "--color=never"]
+    if not is_partial:
+        ns_flags.insert(1, "-M")
     name_status_proc = run_git_command(
         repo_path,
         [
             "diff",
-            "--name-status",
-            "-M",
-            "--no-ext-diff",
-            "--color=never",
+            *ns_flags,
             "--end-of-options",
             *diff_target_args,
             "--",
         ],
+        timeout=30,
+        check=False,
     )
 
+    # Pre-collect non-lockfile paths from name_status so partial clones only diff bounded source paths
+    prelim_paths: list[str] = []
+    for line in name_status_proc.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 2:
+            p = parts[-1].strip().replace("\\", "/")
+            if p and not _is_lockfile_or_generated(p):
+                prelim_paths.append(p)
+
+    diff_flags = [
+        "--ignore-cr-at-eol",
+        "--no-ext-diff",
+        "--color=never",
+        "--src-prefix=a/",
+        "--dst-prefix=b/",
+        "-U3",
+    ]
+    if not is_partial:
+        diff_flags.append("-M")
+        path_filter_args: list[str] = []
+    else:
+        # Prioritize AST/doc files first so the single batch git diff fetches all blobs needed for AST analysis
+        ast_exts = (".py", ".ts", ".tsx", ".js", ".jsx", ".md", ".rst")
+        priority_paths = [p for p in prelim_paths if p.endswith(ast_exts)]
+        other_paths = [p for p in prelim_paths if not p.endswith(ast_exts)]
+        path_filter_args = (priority_paths + other_paths)[:20]
+
     # Run spoof-proof unified diff (with 3 lines of context so hunks are human/LLM readable)
-    full_diff_proc = run_git_command(
-        repo_path,
-        [
-            "diff",
-            "--ignore-cr-at-eol",
-            "--no-ext-diff",
-            "--color=never",
-            "--src-prefix=a/",
-            "--dst-prefix=b/",
-            "-U3",
-            "-M",
-            "--end-of-options",
-            *diff_target_args,
-            "--",
-        ],
-    )
-    parsed_diffs = _parse_unified_diff_by_file(full_diff_proc.stdout)
+    if is_partial and not path_filter_args:
+        parsed_diffs: dict[str, tuple[list[ParsedHunk], int, int, bool]] = {}
+    else:
+        full_diff_proc = run_git_command(
+            repo_path,
+            [
+                "diff",
+                *diff_flags,
+                "--end-of-options",
+                *diff_target_args,
+                *(["--", *path_filter_args] if path_filter_args else ["--"]),
+            ],
+            timeout=25,
+            check=False,
+        )
+        parsed_diffs = _parse_unified_diff_by_file(full_diff_proc.stdout)
+    batched_partial_paths = set(path_filter_args)
 
     evidence_registry: dict[str, EvidenceRecord] = {}
     ev_counter = 1
@@ -593,6 +664,9 @@ def extract_revision_range_data(
     changed_files: list[ChangedFileDelta] = []
     base_blobs: dict[str, str] = {}
     target_blobs: dict[str, str] = {}
+    max_ast_blob_files = 15 if is_partial else 80
+    ast_blobs_loaded = 0
+    is_head_target = target_ref.strip().upper() in ("HEAD", "WORKING_TREE")
 
     for line in name_status_proc.stdout.splitlines():
         if not line.strip():
@@ -697,14 +771,30 @@ def extract_revision_range_data(
             joined_diff = joined_diff[:MAX_BOUNDED_DIFF_CHARS] + "\n... [file diff bounded]"
 
         # Read source blobs only for files supported by AST and doc-drift engines to eliminate subprocess storms
-        if file_path.endswith((".py", ".ts", ".tsx", ".js", ".jsx", ".md", ".rst")):
+        can_load_ast_blob = (
+            file_path.endswith((".py", ".ts", ".tsx", ".js", ".jsx", ".md", ".rst"))
+            and ast_blobs_loaded < max_ast_blob_files
+            and (not is_partial or file_path in batched_partial_paths)
+        )
+        if can_load_ast_blob:
+            ast_blobs_loaded += 1
             if status_lit in ("modified", "deleted", "renamed"):
                 base_lookup_path = old_path or file_path
                 b_blob = read_blob_at_revision(repo_path, base_sha, base_lookup_path)
                 if b_blob is not None:
                     base_blobs[file_path] = b_blob
             if status_lit in ("added", "modified", "renamed"):
-                t_blob = read_blob_at_revision(repo_path, target_sha, file_path)
+                t_blob: str | None = None
+                if is_head_target:
+                    wt_candidate = repo_path / file_path
+                    if wt_candidate.exists() and wt_candidate.is_file() and is_safe_repo_file(repo_path, wt_candidate):
+                        try:
+                            if wt_candidate.stat().st_size <= MAX_SOURCE_BLOB_BYTES:
+                                t_blob = wt_candidate.read_text(encoding="utf-8", errors="replace")
+                        except OSError:
+                            t_blob = None
+                if t_blob is None and not is_partial:
+                    t_blob = read_blob_at_revision(repo_path, target_sha, file_path)
                 if t_blob is not None:
                     target_blobs[file_path] = t_blob
 
@@ -735,3 +825,4 @@ def extract_revision_range_data(
         target_blobs=target_blobs,
         evidence_registry=evidence_registry,
     )
+

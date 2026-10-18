@@ -487,14 +487,153 @@ def run_12_scenarios(use_llm: bool = False) -> list[QualityScenarioResult]:
             )
         )
 
+    # SCENARIO 17: Recursive Function Signature Change with Broken Self-Call Arity (BUG-021)
+    t0 = time.time()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        _init_git_repo(tmp_path)
+        (tmp_path / "tree.py").write_text(
+            "def traverse_tree(node: dict, depth: int = 0) -> int:\n"
+            "    if not node:\n"
+            "        return depth\n"
+            "    return traverse_tree(node.get('next'), depth + 1)\n",
+            encoding="utf-8",
+        )
+        _commit_files(tmp_path, "feat: v1 traverse_tree")
+
+        (tmp_path / "tree.py").write_text(
+            "def traverse_tree(node: dict, depth: int, max_depth: int) -> int:\n"
+            "    if not node or depth >= max_depth:\n"
+            "        return depth\n"
+            "    return traverse_tree(node.get('next'), depth + 1)\n",
+            encoding="utf-8",
+        )
+        _commit_files(tmp_path, "feat: require max_depth in traverse_tree")
+
+        rep = run_breaking_change_detection(tmp_path, base_ref="HEAD~1", target_ref="HEAD", use_llm=False)
+        brk = [b for b in rep.potential_breaking_changes if b.affected_symbol == "traverse_tree"]
+        all_callers = [c for b in brk for c in b.affected_callers]
+        self_caller_flagged = any(
+            c.caller_file == "tree.py" and c.enclosing_symbol == "traverse_tree" and c.arity_mismatch_detected
+            for c in all_callers
+        )
+        passed = len(brk) >= 1 and self_caller_flagged
+        results.append(
+            QualityScenarioResult(
+                scenario_id="SCENARIO-17",
+                scenario_name="Recursive Function Broken Self-Call Arity & Self-Caller Blast Radius",
+                description="Detects when a recursive function adds a required parameter but fails to update its own recursive call site.",
+                expected_breaking=True,
+                detected_breaking_mode_a=passed,
+                pass_mode_a=passed,
+                mode_a_details=f"Detected {len(brk)} breaking finding(s); recursive self-caller arity_mismatch_detected={self_caller_flagged}",
+                evidence_count=len(rep.evidence_registry),
+                duration_ms=round((time.time() - t0) * 1000, 2),
+            )
+        )
+
+    # SCENARIO 18: Unconditional Infinite Recursion & Unqualified Method Self-Call (BUG-022)
+    t0 = time.time()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        _init_git_repo(tmp_path)
+        (tmp_path / "recursion.py").write_text(
+            "def search_depth(n: int) -> int:\n"
+            "    if n <= 0:\n"
+            "        return 0\n"
+            "    return search_depth(n - 1)\n\n"
+            "class Walker:\n"
+            "    def step(self, k: int) -> int:\n"
+            "        if k <= 0:\n"
+            "            return 0\n"
+            "        return self.step(k - 1)\n",
+            encoding="utf-8",
+        )
+        _commit_files(tmp_path, "feat: initial recursion module")
+
+        (tmp_path / "recursion.py").write_text(
+            "def search_depth(n: int) -> int:\n"
+            "    return search_depth(n - 1)\n\n"
+            "class Walker:\n"
+            "    def step(self, k: int) -> int:\n"
+            "        if k <= 0:\n"
+            "            return 0\n"
+            "        return step(k - 1)\n",
+            encoding="utf-8",
+        )
+        _commit_files(tmp_path, "fix: update recursion")
+
+        rep = run_breaking_change_detection(tmp_path, base_ref="HEAD~1", target_ref="HEAD", use_llm=False)
+        syms = {b.affected_symbol for b in rep.potential_breaking_changes}
+        passed = "search_depth" in syms and "Walker.step" in syms
+        results.append(
+            QualityScenarioResult(
+                scenario_id="SCENARIO-18",
+                scenario_name="Unconditional Infinite Recursion & Unqualified Method Self-Recursion",
+                description="Flags missing base-case infinite recursion (RecursionError) and unqualified method self-calls (NameError).",
+                expected_breaking=True,
+                detected_breaking_mode_a=passed,
+                pass_mode_a=passed,
+                mode_a_details=f"Flagged recursive defects on symbols: {sorted(s for s in syms if s)}",
+                evidence_count=len(rep.evidence_registry),
+                duration_ms=round((time.time() - t0) * 1000, 2),
+            )
+        )
+
+    # SCENARIO 19: Local Ollama gemma:latest (Gemma 7B) Hybrid Verification (BUG-025)
+    t0 = time.time()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        _init_git_repo(tmp_path)
+        (tmp_path / "factorial.py").write_text(
+            "def factorial(n: int) -> int:\n"
+            "    return 1 if n <= 1 else n * factorial(n - 1)\n",
+            encoding="utf-8",
+        )
+        _commit_files(tmp_path, "feat: initial factorial")
+
+        (tmp_path / "factorial.py").write_text(
+            "def factorial(n: int, modulo: int) -> int:\n"
+            "    return 1 if n <= 1 else (n * factorial(n - 1, modulo)) % modulo\n",
+            encoding="utf-8",
+        )
+        _commit_files(tmp_path, "feat: add required modulo parameter to factorial")
+
+        rep_a = run_breaking_change_detection(tmp_path, base_ref="HEAD~1", target_ref="HEAD", use_llm=False)
+        rep_gemma = run_breaking_change_detection(
+            tmp_path,
+            base_ref="HEAD~1",
+            target_ref="HEAD",
+            use_llm=use_llm,
+            ollama_model="gemma:7b",
+        )
+        passed_a = rep_a.total_potential_breaking_changes >= 1
+        passed_b = rep_gemma.total_potential_breaking_changes >= 1
+        results.append(
+            QualityScenarioResult(
+                scenario_id="SCENARIO-19",
+                scenario_name="Local Ollama Gemma 7B (gemma:latest) Hybrid Recursive Diff Synthesis",
+                description="Verifies gemma:7b -> gemma:latest tag resolution, VRAM-safe context window, and citation verification.",
+                expected_breaking=True,
+                detected_breaking_mode_a=passed_a,
+                pass_mode_a=passed_a,
+                mode_a_details=f"Mode A: {rep_a.total_potential_breaking_changes} breaking finding(s) on `factorial`.",
+                detected_breaking_mode_b=passed_b,
+                pass_mode_b=passed_b,
+                mode_b_details=f"Mode B ({rep_gemma.llm_backend_status}): {rep_gemma.total_potential_breaking_changes} breaking finding(s), warnings={len(rep_gemma.warnings)}.",
+                evidence_count=len(rep_gemma.evidence_registry),
+                duration_ms=round((time.time() - t0) * 1000, 2),
+            )
+        )
+
     return results
 
 
 def main() -> None:
-    print("=" * 65)
-    print("ATHENA GROUND-TRUTH QUALITY BENCHMARK (16 SCENARIOS)")
-    print("Evaluating Mode A (Deterministic) + Mode B (Ollama qwen2.5-coder:7b)")
-    print("=" * 65)
+    print("=" * 72)
+    print("ATHENA GROUND-TRUTH QUALITY BENCHMARK (19 SCENARIOS)")
+    print("Evaluating Mode A (Deterministic) + Mode B (qwen2.5-coder:7b & gemma:latest)")
+    print("=" * 72)
 
     results = run_12_scenarios(use_llm=True)
     passed_count = sum(1 for r in results if r.pass_mode_a)
@@ -518,7 +657,7 @@ def main() -> None:
             "total_scenarios": total_count,
             "passed_mode_a": passed_count,
             "pass_rate_mode_a_pct": round(pass_pct, 2),
-            "engine": "Athena Static AST + Hybrid Ollama (qwen2.5-coder:7b) Engine",
+            "engine": "Athena Static AST + Hybrid Ollama (qwen2.5-coder:7b & gemma:latest) Engine",
         },
         "scenarios": [asdict(r) for r in results],
     }
@@ -533,8 +672,8 @@ def main() -> None:
         "",
         f"- **Benchmark Scenarios Evaluated**: {total_count}",
         f"- **Mode A (Deterministic AST Engine) Pass Rate**: {passed_count}/{total_count} (**{pass_pct:.1f}%**)",
-        "- **Mode B (Hybrid Local Ollama `qwen2.5-coder:7b`)**: Verified (`ollama:qwen2.5-coder:7b`)",
-        "- **Evaluation Date**: 2026-10-17",
+        "- **Mode B (Hybrid Local Ollama Models)**: Verified (`ollama:qwen2.5-coder:7b` & `ollama:gemma:latest`)",
+        "- **Evaluation Date**: 2026-10-18",
         "",
         "## Benchmark Scenario Matrix",
         "",

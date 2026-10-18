@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     p_inspect.add_argument("repo_path", help="Path to local Git repository")
     p_inspect.add_argument("--max-commits", type=int, default=10, help="Maximum recent commits to return")
 
-    from athena.ollama_engine import DEFAULT_ENABLE_LLM
+    from athena.ollama_engine import DEFAULT_ENABLE_LLM, DEFAULT_OLLAMA_MODEL
 
     # analyze command
     p_analyze = sub.add_parser("analyze", help="Analyze Git history and code diffs between two revisions")
@@ -49,8 +49,9 @@ def main(argv: list[str] | None = None) -> int:
     p_analyze.add_argument("--base", default="AUTO", help="Base revision (tag, branch, SHA, or AUTO)")
     p_analyze.add_argument("--target", default="HEAD", help="Target revision (HEAD, tag, branch, or WORKING_TREE)")
     p_analyze.add_argument("--max-commits", type=int, default=50, help="Maximum commits to inspect")
-    p_analyze.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b) enhancement")
+    p_analyze.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b / gemma:latest) enhancement")
     p_analyze.add_argument("--no-llm", action="store_true", help="Force deterministic AST/diff mode (default)")
+    p_analyze.add_argument("--model", default=DEFAULT_OLLAMA_MODEL, help="Local Ollama model tag (e.g. qwen2.5-coder:7b, gemma:latest)")
 
     # breaking-changes command
     p_brk = sub.add_parser("breaking-changes", help="Detect potential breaking changes requiring human review")
@@ -58,8 +59,9 @@ def main(argv: list[str] | None = None) -> int:
     p_brk.add_argument("--base", default="AUTO", help="Base revision (tag, branch, SHA, or AUTO)")
     p_brk.add_argument("--target", default="HEAD", help="Target revision (HEAD, tag, branch, or WORKING_TREE)")
     p_brk.add_argument("--include-low-confidence", action="store_true", help="Include low-confidence findings")
-    p_brk.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b) enhancement")
+    p_brk.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b / gemma:latest) enhancement")
     p_brk.add_argument("--no-llm", action="store_true", help="Force deterministic AST/diff mode (default)")
+    p_brk.add_argument("--model", default=DEFAULT_OLLAMA_MODEL, help="Local Ollama model tag (e.g. qwen2.5-coder:7b, gemma:latest)")
 
     # release-notes command
     p_rel = sub.add_parser("release-notes", help="Generate structured, evidence-backed release notes")
@@ -76,8 +78,9 @@ def main(argv: list[str] | None = None) -> int:
     p_rel.add_argument("--output", default=None, help="Optional relative file path to save Markdown release notes")
     p_rel.add_argument("--overwrite", action="store_true", help="Allow overwriting existing output file")
     p_rel.add_argument("--markdown-only", action="store_true", help="Print only rendered Markdown instead of JSON")
-    p_rel.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b) enhancement")
+    p_rel.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b / gemma:latest) enhancement")
     p_rel.add_argument("--no-llm", action="store_true", help="Force deterministic AST/diff mode (default)")
+    p_rel.add_argument("--model", default=DEFAULT_OLLAMA_MODEL, help="Local Ollama model tag (e.g. qwen2.5-coder:7b, gemma:latest)")
 
     args = parser.parse_args(argv)
 
@@ -104,6 +107,7 @@ def main(argv: list[str] | None = None) -> int:
             target_ref=args.target,
             max_commits=args.max_commits,
             use_llm=_resolve_use_llm(args),
+            ollama_model=args.model,
         )
         print(json.dumps(res, indent=2))
         return 0 if res.get("status") == "ok" else 1
@@ -115,6 +119,7 @@ def main(argv: list[str] | None = None) -> int:
             target_ref=args.target,
             include_low_confidence=args.include_low_confidence,
             use_llm=_resolve_use_llm(args),
+            ollama_model=args.model,
         )
         print(json.dumps(res, indent=2))
         return 0 if res.get("status") == "ok" else 1
@@ -129,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             output_file=args.output,
             overwrite=args.overwrite,
             use_llm=_resolve_use_llm(args),
+            ollama_model=args.model,
         )
         if args.markdown_only and res.get("status") == "ok":
             print(res.get("markdown", ""))
@@ -141,3 +147,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

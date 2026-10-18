@@ -15,6 +15,7 @@ from athena.ast_analyzer import (
     _format_py_signature,
     _parse_python_symbols,
     _parse_ts_js_symbols,
+    analyze_python_module_diff,
     run_structural_code_analysis,
 )
 from athena.git_inspector import (
@@ -780,5 +781,294 @@ def test_bug_020_python_m_athena_module_execution(tmp_path: Path) -> None:
     assert '"is_valid_git_repo": true' in proc.stdout
 
 
+# =========================================================================
+# EDGE CASE GROUP 8: RECURSIVE FUNCTIONS, GEMMA 7B & MCP ERROR BOUNDARIES (BUG-021 TO BUG-026)
+# =========================================================================
 
+def test_bug_021_recursive_function_signature_and_self_call_arity_mismatch(tmp_path: Path) -> None:
+    """BUG-021: Recursive function that adds a required parameter or mutates its recursive call with wrong arity must be flagged in both breaking findings and affected_callers."""
+    repo = tmp_path / "recursive_arity_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "tree_walk.py").write_text(
+        "def walk_nodes(node: dict, depth: int = 0) -> int:\n"
+        "    if not node or depth > 10:\n"
+        "        return depth\n"
+        "    return walk_nodes(node.get('child'), depth + 1)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial recursive walk_nodes")
+    _git(repo, "tag", "v1.0")
+
+    # Add required param `max_depth: int` to walk_nodes, but forget to pass `max_depth` in the recursive self-call!
+    (repo / "tree_walk.py").write_text(
+        "def walk_nodes(node: dict, depth: int, max_depth: int) -> int:\n"
+        "    if not node or depth >= max_depth:\n"
+        "        return depth\n"
+        "    return walk_nodes(node.get('child'), depth + 1)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: require max_depth in walk_nodes")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    brk = [b for b in report.potential_breaking_changes if b.affected_symbol == "walk_nodes"]
+    assert len(brk) >= 1
+    # Verify recursive self-call inside tree_walk.py was captured in affected_callers with arity_mismatch_detected=True
+    all_callers = [c for b in brk for c in b.affected_callers]
+    assert any(
+        c.caller_file == "tree_walk.py" and c.enclosing_symbol == "walk_nodes" and c.arity_mismatch_detected
+        for c in all_callers
+    ), f"Recursive self-call arity mismatch missed! Callers: {all_callers}"
+    all_facts = " ".join(fact for b in brk for fact in b.observed_facts)
+    assert "recursive" in all_facts.lower() or "arity" in all_facts.lower()
+
+
+def test_bug_022_unconditional_infinite_recursion_and_unqualified_method_recursion(tmp_path: Path) -> None:
+    """BUG-022: Unconditional infinite recursion (missing base case) and unqualified method self-call (calling `foo()` instead of `self.foo()`) must be detected."""
+    repo = tmp_path / "infinite_rec_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "solver.py").write_text(
+        "def countdown(n: int) -> int:\n"
+        "    if n <= 0:\n"
+        "        return 0\n"
+        "    return countdown(n - 1)\n\n"
+        "class GraphTraverser:\n"
+        "    def visit(self, node_id: int) -> int:\n"
+        "        if node_id <= 0:\n"
+        "            return 0\n"
+        "        return self.visit(node_id - 1)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial solver")
+    _git(repo, "tag", "v1.0")
+
+    # 1. Remove base case from countdown (unconditional infinite recursion)
+    # 2. Change self.visit(node_id - 1) to unqualified visit(node_id - 1) in GraphTraverser.visit (NameError bug)
+    # 3. Add a brand new broken recursive function `broken_new_recur(x, y)` that calls `broken_new_recur(x)`
+    (repo / "solver.py").write_text(
+        "def countdown(n: int) -> int:\n"
+        "    return countdown(n - 1)\n\n"
+        "class GraphTraverser:\n"
+        "    def visit(self, node_id: int) -> int:\n"
+        "        if node_id <= 0:\n"
+        "            return 0\n"
+        "        return visit(node_id - 1)\n\n"
+        "def broken_new_recur(x: int, y: int) -> int:\n"
+        "    if x <= 0:\n"
+        "        return y\n"
+        "    return broken_new_recur(x - 1)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "fix: refactor recursion in solver")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    by_sym: dict[str | None, list[ str ]] = {}
+    for b in report.potential_breaking_changes:
+        by_sym.setdefault(b.affected_symbol, []).extend(b.observed_facts)
+
+    assert "countdown" in by_sym, "Unconditional infinite recursion in countdown was not flagged!"
+    assert any("infinite recursion" in f.lower() for f in by_sym["countdown"])
+
+    assert "GraphTraverser.visit" in by_sym, "Unqualified method self-call in GraphTraverser.visit was not flagged!"
+    assert any("self.visit" in f or "nameerror" in f.lower() for f in by_sym["GraphTraverser.visit"])
+
+    assert "broken_new_recur" in by_sym, "Newly added recursive function with broken self-call arity was not flagged!"
+
+
+def test_bug_023_deeply_nested_ast_recursion_error_immunity() -> None:
+    """BUG-023: Deeply nested Python expressions that trigger Python's AST recursion limit must be handled gracefully without crashing."""
+    # Construct a deeply nested expression `((((...1...))))` or chained binary ops `1 + 1 + 1 ...`
+    deep_expr = "+".join(["1"] * 3000)
+    deep_code = f"def deep_calc(x: int) -> int:\n    return {deep_expr}\n"
+    # Should never raise RecursionError
+    syms = _parse_python_symbols(deep_code, file_path="deep.py")
+    assert isinstance(syms, dict)
+    res = analyze_python_module_diff("def deep_calc(x: int) -> int:\n    return 1\n", deep_code, file_path="deep.py")
+    assert res is not None
+
+
+def test_bug_024_same_short_name_method_collision_across_classes(tmp_path: Path) -> None:
+    """BUG-024: When two classes in the same repo both have breaking changes on a method with the same short name (`execute`), neither overwrites the other's caller tracking."""
+    repo = tmp_path / "collision_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "handlers.py").write_text(
+        "class OrderHandler:\n"
+        "    def execute(self, order_id: int) -> bool:\n"
+        "        return True\n\n"
+        "class PaymentHandler:\n"
+        "    def execute(self, payment_id: int) -> bool:\n"
+        "        return True\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial handlers")
+    _git(repo, "tag", "v1.0")
+
+    (repo / "handlers.py").write_text(
+        "class OrderHandler:\n"
+        "    def execute(self, order_id: int, strict: bool) -> bool:\n"
+        "        if strict:\n"
+        "            return self.execute(order_id)\n"
+        "        return True\n\n"
+        "class PaymentHandler:\n"
+        "    def execute(self, payment_id: int, currency: str) -> bool:\n"
+        "        if not currency:\n"
+        "            return self.execute(payment_id)\n"
+        "        return True\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: update both execute methods")
+
+    report = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert report.status == "ok"
+    order_brk = [b for b in report.potential_breaking_changes if b.affected_symbol == "OrderHandler.execute"]
+    pay_brk = [b for b in report.potential_breaking_changes if b.affected_symbol == "PaymentHandler.execute"]
+    assert len(order_brk) >= 1 and len(pay_brk) >= 1
+    assert any(c.enclosing_symbol == "OrderHandler.execute" and c.arity_mismatch_detected for b in order_brk for c in b.affected_callers)
+    assert any(c.enclosing_symbol == "PaymentHandler.execute" and c.arity_mismatch_detected for b in pay_brk for c in b.affected_callers)
+
+
+def test_bug_025_ollama_gemma_7b_alias_resolution_and_json_normalization(tmp_path: Path) -> None:
+    """BUG-025: Verify `gemma:7b` / `gemma:latest` model alias resolution, top-level JSON story normalization, and live Ollama inference if running."""
+    from athena.ollama_engine import check_ollama_model_ready, extract_json_object, resolve_ollama_model_name
+    from athena.mcp_server import analyze_git_history
+
+    # 1. Verify top-level JSON array/single-story parsing
+    single_obj = extract_json_object('{"story_id": "story_001", "title": "Fix recursion", "category": "bug_fix"}')
+    assert single_obj is not None and single_obj.get("story_id") == "story_001"
+    list_obj = extract_json_object('[{"story_id": "story_001", "title": "Fix recursion"}]')
+    assert list_obj is not None and isinstance(list_obj.get("stories"), list)
+
+    # 2. If local Ollama has gemma:latest installed, test alias resolution ("gemma:7b" -> "gemma:latest") and live MCP analysis
+    ready, resolved_tag, _ = resolve_ollama_model_name(model="gemma:7b")
+    if ready:
+        assert resolved_tag.startswith("gemma")
+        chk_ok, _ = check_ollama_model_ready(model="gemma:7b")
+        assert chk_ok is True
+
+        repo = tmp_path / "gemma_live_repo"
+        repo.mkdir()
+        _git(repo, "init")
+        _git(repo, "config", "user.name", "Tester")
+        _git(repo, "config", "user.email", "tester@example.com")
+        (repo / "fib.py").write_text(
+            "def fib(n: int) -> int:\n    return n if n <= 1 else fib(n - 1) + fib(n - 2)\n",
+            encoding="utf-8",
+        )
+        _git(repo, "add", ".")
+        _git(repo, "commit", "-m", "feat: initial fib")
+        _git(repo, "tag", "v1.0")
+
+        (repo / "fib.py").write_text(
+            "def fib(n: int, max_n: int) -> int:\n    return n if n <= 1 else fib(n - 1, max_n) + fib(n - 2, max_n)\n",
+            encoding="utf-8",
+        )
+        _git(repo, "add", ".")
+        _git(repo, "commit", "-m", "feat: add max_n limit to fib")
+
+        res = analyze_git_history(
+            repo_path=str(repo),
+            base_ref="v1.0",
+            target_ref="HEAD",
+            use_llm=True,
+            ollama_model="gemma:7b",
+        )
+        assert res["status"] == "ok"
+        assert res["llm_backend_status"] in (f"ollama:{resolved_tag}", "fallback_deterministic")
+        assert len(res["stories"]) >= 1
+
+
+def test_bug_026_mcp_server_error_boundaries_on_adversarial_inputs() -> None:
+    """BUG-026: All MCP server tools must return structured error dicts rather than raising uncaught exceptions on invalid inputs."""
+    from athena.mcp_server import (
+        analyze_change_graph,
+        analyze_git_history,
+        detect_potential_breaking_changes,
+        generate_release_notes,
+        generate_verified_release_brief,
+        inspect_repository,
+        verify_breaking_and_doc_drift,
+    )
+
+    for tool_fn in (
+        inspect_repository,
+        analyze_git_history,
+        generate_release_notes,
+        detect_potential_breaking_changes,
+        analyze_change_graph,
+        verify_breaking_and_doc_drift,
+        generate_verified_release_brief,
+    ):
+        res_empty = tool_fn(repo_path="")  # type: ignore[call-arg]
+        assert isinstance(res_empty, dict)
+        assert res_empty["status"] == "error"
+        assert res_empty.get("error_code") == "EMPTY_REPO_PATH"
+
+    # Boolean passed as integer max_commits (`isinstance(True, int)` in Python!) must be rejected
+    res_bool = inspect_repository(repo_path=".", max_recent_commits=True)  # type: ignore[arg-type]
+    assert res_bool["status"] == "error"
+    assert res_bool["error_code"] == "INVALID_MAX_COMMITS"
+
+    res_hist_bool = analyze_git_history(repo_path=".", max_commits=False)  # type: ignore[arg-type]
+    assert res_hist_bool["status"] == "error"
+    assert res_hist_bool["error_code"] == "INVALID_MAX_COMMITS"
+
+
+def test_bug_028_partial_clone_promisor_detection_and_bounded_diff(tmp_path: Path) -> None:
+    """BUG-028 & BUG-029: Promisor partial clones (--filter=blob:none) must use --name-only commit log parsing and priority AST diff batching."""
+    from athena.git_inspector import _is_promisor_partial_clone
+
+    repo = tmp_path / "promisor_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+    assert _is_promisor_partial_clone(repo) is False
+
+    # Simulate partial clone promisor configuration in .git/config
+    _git(repo, "config", "remote.origin.promisor", "true")
+    _git(repo, "config", "remote.origin.partialclonefilter", "blob:none")
+    assert _is_promisor_partial_clone(repo) is True
+
+    (repo / "rec.py").write_text(
+        "def countdown(n: int) -> int:\n    return 0 if n <= 0 else countdown(n - 1)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial countdown")
+    _git(repo, "tag", "v1.0")
+
+    (repo / "rec.py").write_text(
+        "def countdown(n: int, step: int) -> int:\n    return 0 if n <= 0 else countdown(n - step)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: add step to countdown")
+
+    extraction = extract_revision_range_data(repo, base_ref="v1.0", target_ref="HEAD")
+    assert len(extraction.commits) == 1
+    assert "rec.py" in extraction.commits[0].changed_files
+    assert "rec.py" in extraction.target_blobs
+
+    brk = run_breaking_change_detection(str(repo), base_ref="v1.0", target_ref="HEAD", use_llm=False)
+    assert brk.status == "ok"
+    assert brk.total_potential_breaking_changes >= 1
 
