@@ -847,21 +847,14 @@ def _compare_python_symbol(
         for p in new_sym.params
         if p.name not in old_by_name and p.has_default and p.kind not in ("VAR_POSITIONAL", "VAR_KEYWORD")
     ]
-    if added_optional and not findings:
-        findings.append(
-            (
-                "signature_changed",
-                False,
-                "low",
-                f"Added backward-compatible optional parameter(s) {added_optional} with default values to '{old_sym.qualified_name}'.",
-            )
-        )
 
-    # Check common parameters for lost defaults, default=None guard (griffe#469), or kind changes
+    # Check common parameters for reordered or index-shifted positional parameters (BUG-030), lost defaults, default=None guard (griffe#469), or kind changes
     old_pos_order = [p.name for p in old_sym.params if p.kind in ("POSITIONAL_ONLY", "POSITIONAL_OR_KEYWORD")]
     new_pos_order = [p.name for p in new_sym.params if p.kind in ("POSITIONAL_ONLY", "POSITIONAL_OR_KEYWORD")]
-    common_pos_old = [n for n in old_pos_order if n in new_pos_order]
-    common_pos_new = [n for n in new_pos_order if n in old_pos_order]
+    old_pos_idx = {name: idx for idx, name in enumerate(old_pos_order)}
+    new_pos_idx = {name: idx for idx, name in enumerate(new_pos_order)}
+    common_pos_old = [n for n in old_pos_order if n in new_pos_idx]
+    common_pos_new = [n for n in new_pos_order if n in old_pos_idx]
     if common_pos_old != common_pos_new:
         findings.append(
             (
@@ -871,6 +864,21 @@ def _compare_python_symbol(
                 f"Positional parameter order changed in '{old_sym.qualified_name}' from {common_pos_old} to {common_pos_new}.",
             )
         )
+    else:
+        shifted_pos = [
+            f"{n} (index {old_pos_idx[n]} -> {new_pos_idx[n]})"
+            for n in common_pos_old
+            if old_pos_idx[n] != new_pos_idx[n]
+        ]
+        if shifted_pos:
+            findings.append(
+                (
+                    "signature_changed",
+                    True,
+                    "high",
+                    f"Surviving positional parameter(s) {', '.join(shifted_pos)} shifted position in '{old_sym.qualified_name}' due to parameter insertion; existing positional callers will bind arguments to different parameters.",
+                )
+            )
 
     for name, old_p in old_by_name.items():
         if name not in new_by_name:
@@ -913,6 +921,16 @@ def _compare_python_symbol(
                     f"Parameter '{name}' kind in '{old_sym.qualified_name}' changed from {old_p.kind} to {new_p.kind}.",
                 )
             )
+
+    if added_optional and not findings:
+        findings.append(
+            (
+                "signature_changed",
+                False,
+                "low",
+                f"Added backward-compatible optional parameter(s) {added_optional} with default values to '{old_sym.qualified_name}'.",
+            )
+        )
 
     # Check return type annotation change (diff.py:L699 gap)
     if old_sym.return_annotation != new_sym.return_annotation and old_sym.return_annotation is not None:

@@ -1072,3 +1072,47 @@ def test_bug_028_partial_clone_promisor_detection_and_bounded_diff(tmp_path: Pat
     assert brk.status == "ok"
     assert brk.total_potential_breaking_changes >= 1
 
+
+def test_bug_030_optional_positional_parameter_insertion_shifts_surviving_indices(tmp_path: Path) -> None:
+    """BUG-030: Inserting an optional positional parameter before a surviving positional parameter (e.g. f(a, b=2) -> f(a, inserted=0, b=2)) must be flagged as breaking."""
+    repo = tmp_path / "pos_shift_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "mod.py").write_text(
+        "def f(a, b=2):\n    return (a, b)\n\n"
+        "def safe_append(a, b=2):\n    return (a, b)\n\n"
+        "def safe_kwonly(a, b=2):\n    return (a, b)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: baseline functions")
+    _git(repo, "tag", "v1.0")
+
+    (repo / "mod.py").write_text(
+        "def f(a, inserted=0, b=2):\n    return (a, b)\n\n"
+        "def safe_append(a, b=2, appended=0):\n    return (a, b)\n\n"
+        "def safe_kwonly(a, b=2, *, kw_opt=0):\n    return (a, b)\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: insert optional param in f, append in safe_append, kwonly in safe_kwonly")
+
+    extraction = extract_revision_range_data(repo, base_ref="v1.0", target_ref="HEAD")
+    structural = run_structural_code_analysis(extraction)
+    by_sym = {sc.symbol_name: sc for sc in structural.symbol_changes}
+
+    assert "f" in by_sym
+    assert by_sym["f"].is_breaking_candidate is True
+    assert by_sym["f"].severity == "high"
+    assert "shifted position" in by_sym["f"].details
+
+    assert "safe_append" in by_sym
+    assert by_sym["safe_append"].is_breaking_candidate is False
+
+    assert "safe_kwonly" in by_sym
+    assert by_sym["safe_kwonly"].is_breaking_candidate is False
+
+
