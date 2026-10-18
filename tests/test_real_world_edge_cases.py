@@ -1116,3 +1116,40 @@ def test_bug_030_optional_positional_parameter_insertion_shifts_surviving_indice
     assert by_sym["safe_kwonly"].is_breaking_candidate is False
 
 
+_M_BINDING_CASES = [
+    (only, n, k)
+    for only in (False, True)
+    for n in range(1, 7)
+    for k in range(n + 2)
+]
+
+
+@pytest.mark.parametrize("only,n,k", _M_BINDING_CASES)
+def test_m_binding_matrix(only: bool, n: int, k: int) -> None:
+    """BUG-030 (M binding-relation audit by Massimiliano Brighindi): 66-case parametrized matrix across positional-only (/), standard positional, safe trailing appends, and keyword-only (*) controls."""
+    from athena.ast_analyzer import analyze_python_module_diff
+
+    names = [f"p{i}" for i in range(n)]
+    params = [f"{p}=0" for p in names]
+    suffix = ", /" if only else ""
+    old_sig = ", ".join(params) + suffix
+    if k <= n:
+        changed = params.copy()
+        changed.insert(k, "inserted=99")
+        new_sig = ", ".join(changed) + suffix
+    else:
+        new_sig = old_sig + ", *, inserted=99"
+    body = f"\n\treturn ({', '.join(names)},)\n"
+    old = f"def f({old_sig}):{body}"
+    new = f"def f({new_sig}):{body}"
+    a: dict = {}
+    b: dict = {}
+    exec(old, a)
+    exec(new, b)
+    args = tuple(range(100, 100 + n))
+    expected = a["f"](*args) != b["f"](*args)
+    actual = any(
+        x.is_breaking_candidate
+        for x in analyze_python_module_diff(old, new).symbol_changes
+    )
+    assert actual == expected
