@@ -6,7 +6,7 @@
 
 # Athena (`athena-mcp`) — v1.1.0
 
-[![M8ven Score](https://m8ven.ai/badge/mcp/aaryanrwt-athena-bahjjw)](https://m8ven.ai/mcp/aaryanrwt-athena-bahjjw?s=readme)
+[![M8ven Score](https://m8ven.ai/badge/mcp/aaryanrwt/athena)](https://m8ven.ai/mcp/aaryanrwt/athena?s=readme)
 
 **Local-First, Evidence-Backed Multi-Language Git & AST Release-Readiness and Change-Intelligence MCP Server**
 
