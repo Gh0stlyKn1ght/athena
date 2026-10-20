@@ -1008,23 +1008,27 @@ SUPPORTED_NON_PY_CODE_EXTS = (
 SUPPORTED_ALL_CODE_EXTS = (".py", *SUPPORTED_NON_PY_CODE_EXTS)
 
 _TS_EXPORT_FUNC_RE = re.compile(
-    r"^\s*export\s+(?:default\s+)?(?:async\s+)?function\s+(?P<name>[A-Za-z0-9_$]+)(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*:\s*(?P<ret>[^{;]+))?",
+    r"^\s*export\s+(?:declare\s+)?(?:default\s+)?(?:async\s+)?function\s*\*?\s*(?P<name>[A-Za-z0-9_$]+)(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*:\s*(?P<ret>[^{;\n]+))?",
     re.MULTILINE,
 )
 _TS_EXPORT_ARROW_RE = re.compile(
-    r"^\s*export\s+(?:const|let|var)\s+(?P<name>[A-Za-z0-9_$]+)\s*=\s*(?:async\s*)?(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*:\s*(?P<ret>[^{;=>]+))?\s*=>",
+    r"^\s*(?:export\s+)?(?:const|let|var)\s+(?P<name>[A-Za-z0-9_$]+)\s*=\s*(?:async\s*)?(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*:\s*(?P<ret>[^{;=>\n]+))?\s*=>",
     re.MULTILINE,
 )
 _TS_EXPORT_CLASS_RE = re.compile(
-    r"^\s*export\s+(?:default\s+)?class\s+(?P<name>[A-Za-z0-9_$]+)(?:<[^>]*>)?(?:\s+extends\s+(?P<base>[A-Za-z0-9_$.<>]+))?",
+    r"^\s*export\s+(?:declare\s+)?(?:default\s+)?(?:abstract\s+)?class\s+(?P<name>[A-Za-z0-9_$]+)(?:<[^>]*>)?(?:\s+extends\s+(?P<base>[A-Za-z0-9_$.<>]+))?",
+    re.MULTILINE,
+)
+_TS_CLASS_METHOD_RE = re.compile(
+    r"^\s+(?:public\s+|protected\s+)?(?:static\s+)?(?:async\s+)?(?P<name>[A-Za-z_$][A-Za-z0-9_$]*)(?:<[^>]*>)?\s*\((?P<params>[^;{}()]*)\)(?:\s*:\s*(?P<ret>[^{;\n]+))?\s*\{",
     re.MULTILINE,
 )
 _TS_EXPORT_TYPE_RE = re.compile(
-    r"^\s*export\s+(?P<kind>interface|type|enum)\s+(?P<name>[A-Za-z0-9_$]+)(?:[<={\s])",
+    r"^\s*export\s+(?:declare\s+)?(?P<kind>interface|type|enum)\s+(?P<name>[A-Za-z0-9_$]+)(?:[<={\s])",
     re.MULTILINE,
 )
 _JS_TOP_FUNC_RE = re.compile(
-    r"^(?:async\s+)?function\s+(?P<name>[A-Za-z_$][A-Za-z0-9_$]*)\s*\((?P<params>[^)]*)\)",
+    r"^\s*(?:async\s+)?function\s*\*?\s*(?P<name>[A-Za-z_$][A-Za-z0-9_$]*)\s*\((?P<params>[^)]*)\)",
     re.MULTILINE,
 )
 _GO_FUNC_RE = re.compile(
@@ -1036,7 +1040,7 @@ _GO_TYPE_RE = re.compile(
     re.MULTILINE,
 )
 _RUST_FN_RE = re.compile(
-    r"^\s*(?P<vis>pub(?:\([^)]+\))?\s+)?(?:const\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*->\s*(?P<ret>[^{;]+))?",
+    r"^\s*(?P<vis>pub(?:\([^)]+\))?\s+)?(?:const\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*->\s*(?P<ret>[^{;\n]+))?",
     re.MULTILINE,
 )
 _RUST_TYPE_RE = re.compile(
@@ -1048,7 +1052,7 @@ _CPP_CLASS_RE = re.compile(
     re.MULTILINE,
 )
 _CPP_FUNC_RE = re.compile(
-    r"^(?:[\w:*&<>]+\s+)+(?P<name>[A-Za-z_~][A-Za-z0-9_:]*)\s*\((?P<params>[^;{}()]*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?=\{)",
+    r"^\s*(?:template\s*<[^>]*>\s*)?(?:(?:inline|constexpr|consteval|static|virtual|explicit|friend|extern|[A-Z0-9_]+)\s+)*(?P<ret>[A-Za-z_][A-Za-z0-9_:<>*,&\s]*\s+)(?P<name>[A-Za-z_][A-Za-z0-9_:]*)\s*\((?P<params>[^;{}()]*)\)\s*(?:const\s*)?(?:noexcept(?:\([^)]*\))?\s*)?(?:override\s*|final\s*)*(?:->\s*[^{;\n]+)?\s*(?=\{)",
     re.MULTILINE,
 )
 _JAVA_CS_CLASS_RE = re.compile(
@@ -1056,30 +1060,39 @@ _JAVA_CS_CLASS_RE = re.compile(
     re.MULTILINE,
 )
 _JAVA_CS_METHOD_RE = re.compile(
-    r"^\s*(?:public|protected)\s+(?:static\s+|final\s+|abstract\s+|synchronized\s+|virtual\s+|override\s+|async\s+)*(?P<ret>[A-Za-z0-9_<>\[\].,?\s]+)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)",
+    r"^\s*(?:public|protected)\s+(?:static\s+|final\s+|abstract\s+|synchronized\s+|virtual\s+|override\s+|async\s+)*(?:<[^>]+>\s+)?(?P<ret>[A-Za-z0-9_<>\[\].,?\s]+)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)",
     re.MULTILINE,
 )
 _RB_PHP_SWIFT_FUNC_RE = re.compile(
-    r"^\s*(?:public\s+|protected\s+|static\s+)*(?:def|function|func)\s+(?P<name>[A-Za-z_][A-Za-z0-9_?!]*)\s*(?:\((?P<params>[^)]*)\))?(?:\s*(?::|->)\s*(?P<ret>[^{;\n]+))?",
+    r"^\s*(?:(?:public|protected|private|static|final|abstract)\s+)*(?:def|function|func)\s+(?P<name>(?:self\.)?[A-Za-z_][A-Za-z0-9_?!]*)\s*(?:\((?P<params>[^)]*)\))?(?:\s*(?::|->)\s*(?P<ret>[^{;\n]+))?",
     re.MULTILINE,
 )
 _RB_PHP_SWIFT_CLASS_RE = re.compile(
-    r"^\s*(?:public\s+|final\s+|abstract\s+)*(?P<kind>class|module|interface|trait|struct|protocol|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)",
+    r"^\s*(?:(?:public|final|abstract|readonly)\s+)*(?P<kind>class|module|interface|trait|struct|protocol|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)",
     re.MULTILINE,
 )
-_CPP_CONTROL_KEYWORDS = {"if", "for", "while", "switch", "catch", "return", "sizeof", "alignof", "decltype"}
+_CPP_CONTROL_KEYWORDS = {
+    "if", "else", "for", "while", "switch", "catch", "return", "sizeof",
+    "alignof", "decltype", "static_assert", "assert", "defined", "elif",
+    "pragma", "include", "define", "undef", "typename", "template",
+    "new", "delete", "throw", "try", "namespace", "using",
+}
+_JS_CONTROL_KEYWORDS = {
+    "if", "else", "for", "while", "switch", "catch", "return", "function",
+    "constructor", "super", "import", "export", "typeof", "instanceof", "await",
+}
 
 
 def _parse_ts_js_symbols(source: str) -> dict[str, tuple[str, int, str, list[str], str | None]]:
-    """Extract exported functions, classes, interfaces, enums, and arrow functions from TypeScript/JavaScript files.
+    """Extract exported functions, classes, methods, interfaces, enums, and arrow functions from TypeScript/JavaScript files.
     Uses pure-Python structural pattern analysis without requiring external Node.js or native compiler dependencies.
     Returns dict: name -> (kind, line_no, signature_str, param_list, return_type)
     """
     symbols: dict[str, tuple[str, int, str, list[str], str | None]] = {}
     for match in _TS_EXPORT_FUNC_RE.finditer(source):
         name = match.group("name")
-        params_raw = match.group("params").strip()
-        ret_raw = (match.group("ret") or "").strip() or None
+        params_raw = " ".join(match.group("params").split())
+        ret_raw = " ".join((match.group("ret") or "").split()) or None
         line_no = source.count("\n", 0, match.start()) + 1
         param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
         sig = f"export function {name}({params_raw})" + (f": {ret_raw}" if ret_raw else "")
@@ -1087,8 +1100,10 @@ def _parse_ts_js_symbols(source: str) -> dict[str, tuple[str, int, str, list[str
 
     for match in _TS_EXPORT_ARROW_RE.finditer(source):
         name = match.group("name")
-        params_raw = match.group("params").strip()
-        ret_raw = (match.group("ret") or "").strip() or None
+        if name in symbols or name.startswith("_"):
+            continue
+        params_raw = " ".join(match.group("params").split())
+        ret_raw = " ".join((match.group("ret") or "").split()) or None
         line_no = source.count("\n", 0, match.start()) + 1
         param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
         sig = f"export const {name} = ({params_raw})" + (f": {ret_raw}" if ret_raw else "") + " =>"
@@ -1111,13 +1126,24 @@ def _parse_ts_js_symbols(source: str) -> dict[str, tuple[str, int, str, list[str
 
     for match in _JS_TOP_FUNC_RE.finditer(source):
         name = match.group("name")
-        if name in symbols or name.startswith("_"):
+        if name in symbols or name in _JS_CONTROL_KEYWORDS or name.startswith("_"):
             continue
-        params_raw = match.group("params").strip()
+        params_raw = " ".join(match.group("params").split())
         line_no = source.count("\n", 0, match.start()) + 1
         param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
         sig = f"function {name}({params_raw})"
         symbols[name] = ("function", line_no, sig, param_items, None)
+
+    for match in _TS_CLASS_METHOD_RE.finditer(source):
+        name = match.group("name")
+        if name in symbols or name in _JS_CONTROL_KEYWORDS or name.startswith(("_", "#")):
+            continue
+        params_raw = " ".join(match.group("params").split())
+        ret_raw = " ".join((match.group("ret") or "").split()) or None
+        line_no = source.count("\n", 0, match.start()) + 1
+        param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
+        sig = f"{name}({params_raw})" + (f": {ret_raw}" if ret_raw else "")
+        symbols[name] = ("method", line_no, sig, param_items, ret_raw)
 
     return symbols
 
@@ -1139,8 +1165,8 @@ def _parse_multilang_symbols(
         for m in _GO_FUNC_RE.finditer(source):
             name = m.group("name")
             recv = (m.group("recv") or "").strip()
-            params_raw = m.group("params").strip()
-            ret_raw = (m.group("ret") or "").strip() or None
+            params_raw = " ".join(m.group("params").split())
+            ret_raw = " ".join((m.group("ret") or "").split()) or None
             line_no = source.count("\n", 0, m.start()) + 1
             param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
             qname = name
@@ -1160,8 +1186,8 @@ def _parse_multilang_symbols(
         for m in _RUST_FN_RE.finditer(source):
             name = m.group("name")
             vis = (m.group("vis") or "").strip()
-            params_raw = m.group("params").strip()
-            ret_raw = (m.group("ret") or "").strip() or None
+            params_raw = " ".join(m.group("params").split())
+            ret_raw = " ".join((m.group("ret") or "").split()) or None
             line_no = source.count("\n", 0, m.start()) + 1
             param_items = [p.strip() for p in params_raw.split(",") if p.strip() and p.strip() not in ("self", "&self", "&mut self")]
             sig = f"{'pub ' if vis else ''}fn {name}({params_raw})" + (f" -> {ret_raw}" if ret_raw else "")
@@ -1178,18 +1204,30 @@ def _parse_multilang_symbols(
     if file_path.endswith((".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx")):
         for m in _CPP_CLASS_RE.finditer(source):
             name = m.group("name")
-            kind_raw = m.group("kind")
-            base = (m.group("base") or "").strip() or None
+            if name in _CPP_CONTROL_KEYWORDS or (name.isupper() and len(name) >= 3):
+                continue
+            kind_raw = " ".join(m.group("kind").split())
+            base = " ".join((m.group("base") or "").split()) or None
             line_no = source.count("\n", 0, m.start()) + 1
             kind_mapped = "enum" if "enum" in kind_raw else "class"
             sig = f"{kind_raw} {name}" + (f" : {base}" if base else "")
             symbols[name] = (kind_mapped, line_no, sig, [], base)
         for m in _CPP_FUNC_RE.finditer(source):
+            ret_raw = " ".join((m.group("ret") or "").split())
+            ret_tokens = {tok.strip("*&") for tok in ret_raw.split()}
             name = m.group("name").strip()
             short_n = name.split("::")[-1]
-            if short_n in _CPP_CONTROL_KEYWORDS or short_n.startswith("~"):
-                continue
             params_raw = " ".join(m.group("params").split())
+            if (
+                short_n in _CPP_CONTROL_KEYWORDS
+                or bool(ret_tokens & _CPP_CONTROL_KEYWORDS)
+                or short_n.startswith("~")
+                or (short_n.isupper() and len(short_n) >= 3)
+                or '"' in params_raw
+                or "'" in params_raw
+                or name in symbols
+            ):
+                continue
             line_no = source.count("\n", 0, m.start()) + 1
             param_items = [p.strip() for p in params_raw.split(",") if p.strip() and p.strip() != "void"]
             sig = f"{name}({params_raw})"
@@ -1224,8 +1262,8 @@ def _parse_multilang_symbols(
             symbols[name] = (kind_mapped, line_no, f"{kind_raw} {name}", [], None)
         for m in _RB_PHP_SWIFT_FUNC_RE.finditer(source):
             name = m.group("name")
-            params_raw = (m.group("params") or "").strip()
-            ret_raw = (m.group("ret") or "").strip() or None
+            params_raw = " ".join((m.group("params") or "").split())
+            ret_raw = " ".join((m.group("ret") or "").split()) or None
             line_no = source.count("\n", 0, m.start()) + 1
             param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
             sig = f"def {name}({params_raw})" + (f" -> {ret_raw}" if ret_raw else "")
@@ -1233,6 +1271,112 @@ def _parse_multilang_symbols(
         return symbols
 
     return symbols
+
+
+def _extract_brace_or_end_body(source: str, start_idx: int, is_ruby: bool = False) -> str:
+    """Extract the body of a function starting near start_idx up to matching '}' or Ruby 'end'."""
+    max_window = source[start_idx : start_idx + 12000]
+    if is_ruby:
+        end_match = re.search(r"^\s*end\b", max_window, re.MULTILINE)
+        return max_window[: end_match.start()] if end_match else max_window[:2000]
+    brace_pos = max_window.find("{")
+    if brace_pos == -1:
+        return ""
+    semi_pos = max_window.find(";")
+    if 0 <= semi_pos < brace_pos:
+        return ""
+    depth = 0
+    for idx in range(brace_pos, len(max_window)):
+        ch = max_window[idx]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return max_window[brace_pos + 1 : idx]
+    return max_window[brace_pos + 1 : brace_pos + 2500]
+
+
+def detect_multilang_recursive_functions(
+    source: str,
+    file_path: str,
+) -> dict[str, tuple[bool, list[str]]]:
+    """Detect recursive functions and broken recursive self-call arity across non-Python languages (BUG-035).
+    Returns dict: symbol_name -> (is_recursive, list_of_arity_mismatch_messages)
+    """
+    syms = _parse_multilang_symbols(source, file_path)
+    if not syms:
+        return {}
+    lines = source.splitlines(keepends=True)
+    line_offsets: list[int] = [0]
+    for ln in lines:
+        line_offsets.append(line_offsets[-1] + len(ln))
+
+    is_rb = file_path.endswith(".rb")
+    results: dict[str, tuple[bool, list[str]]] = {}
+
+    for sym_name, (kind, line_no, _sig, param_items, _ret) in syms.items():
+        if kind not in ("function", "method"):
+            continue
+        short_n = sym_name.split("::")[-1].split(".")[-1]
+        if len(short_n) < 2 or short_n in _CPP_CONTROL_KEYWORDS or short_n in _JS_CONTROL_KEYWORDS:
+            continue
+        start_offset = line_offsets[min(max(0, line_no - 1), len(line_offsets) - 1)]
+        first_nl = source.find("\n", start_offset)
+        body_search_start = first_nl if first_nl != -1 else start_offset
+        body = _extract_brace_or_end_body(source, start_offset, is_ruby=is_rb)
+        if not body:
+            continue
+        # Strip line comments to avoid false-positive self-call matches in comments
+        body_clean = re.sub(r"//[^\n]*|#[^\n]*", "", body)
+        # Skip the signature line itself if present
+        sig_end = body_search_start - start_offset
+        if sig_end > 0 and is_rb:
+            body_clean = body_clean[min(sig_end, len(body_clean)) :]
+
+        raw_matches = list(re.finditer(rf"\b{re.escape(short_n)}\s*\(", body_clean))
+        call_matches = []
+        for cm in raw_matches:
+            prefix = body_clean[max(0, cm.start() - 32) : cm.start()].rstrip()
+            if prefix.endswith((".", "->", "::")):
+                if not prefix.endswith(("this.", "this->", "$this->", "self.", "self::", "static::")):
+                    continue
+            elif any(prefix.endswith(kw) for kw in ("function", "def", "fn", "func")):
+                continue
+            call_matches.append(cm)
+        if not call_matches:
+            continue
+
+        min_req = sum(
+            1
+            for p in param_items
+            if "=" not in p and "?" not in p and "..." not in p and not p.startswith("*")
+        )
+        arity_errors: list[str] = []
+        if min_req > 0:
+            for cm in call_matches:
+                line_start = body_clean.rfind("\n", 0, cm.start()) + 1
+                line_end = body_clean.find("\n", cm.end())
+                call_line = body_clean[line_start : (line_end if line_end != -1 else len(body_clean))]
+                arg_cnt = _count_call_args_in_text(call_line, short_n)
+                if arg_cnt is not None and arg_cnt < min_req:
+                    arity_errors.append(
+                        f"Recursive self-call `{call_line.strip()[:80]}` passes {arg_cnt} argument(s), "
+                        f"but `{sym_name}` requires at least {min_req}."
+                    )
+        results[sym_name] = (True, arity_errors)
+    return results
+
+
+def count_recursive_functions_in_source(source: str, file_path: str) -> int:
+    """Count recursive functions in Python or any supported multi-language source file."""
+    if file_path.endswith(".py"):
+        syms = _parse_python_symbols(source, file_path=file_path)
+        return sum(1 for s in syms.values() if s.is_recursive)
+    if file_path.endswith(SUPPORTED_NON_PY_CODE_EXTS):
+        rec_map = detect_multilang_recursive_functions(source, file_path)
+        return sum(1 for is_rec, _ in rec_map.values() if is_rec)
+    return 0
 
 
 def _list_repo_files_at_target(repo_path: Path, target_sha: str) -> list[str]:
@@ -1489,6 +1633,26 @@ def _scan_callers_and_tests_and_docs(
     ]
     max_scan_files = 1000
 
+    # Pre-compile combined regexes once outside the file loop to avoid O(files * symbols * lines) blowup (BUG-033)
+    mod_short_to_qnames: dict[str, list[str]] = {}
+    for sym_qname in modified_symbol_names:
+        short_n = sym_qname.split("::")[-1].split(".")[-1]
+        if short_n in ("__init__", "__call__"):
+            short_n = sym_qname.split(".")[0]
+        if short_n:
+            mod_short_to_qnames.setdefault(short_n, []).append(sym_qname)
+
+    _mod_test_re = (
+        re.compile(rf"\b({'|'.join(re.escape(k) for k in mod_short_to_qnames)})\b")
+        if mod_short_to_qnames
+        else None
+    )
+    _breaking_call_re = (
+        re.compile(rf"\b({'|'.join(re.escape(k) for k in breaking_qnames_by_short)})\s*\(")
+        if breaking_qnames_by_short
+        else None
+    )
+
     for rel_path in eligible_scan_files[:max_scan_files]:
         is_py = rel_path.endswith(".py")
         is_ts = rel_path.endswith(SUPPORTED_NON_PY_CODE_EXTS)
@@ -1518,13 +1682,10 @@ def _scan_callers_and_tests_and_docs(
             continue
 
         is_test = _is_test_file(rel_path)
-        if is_test:
-            for sym_qname in modified_symbol_names:
-                short_n = sym_qname.split(".")[-1]
-                if short_n in ("__init__", "__call__"):
-                    short_n = sym_qname.split(".")[0]
-                if re.search(rf"\b{re.escape(short_n)}\b", content):
-                    tested_symbols.add(sym_qname)
+        if is_test and _mod_test_re is not None:
+            for m_test in _mod_test_re.finditer(content):
+                for qn in mod_short_to_qnames.get(m_test.group(1), ()):
+                    tested_symbols.add(qn)
 
         if is_py:
             try:
@@ -1637,28 +1798,28 @@ def _scan_callers_and_tests_and_docs(
                         if len(unresolved_dynamic_calls) >= 25:
                             break
 
-            if breaking_qnames_by_short:
-                for short_n, qnames in breaking_qnames_by_short.items():
-                    for qname in qnames:
-                        sc_obj = breaking_by_qname[qname]
-                        for idx, line in enumerate(lines, start=1):
+            if _breaking_call_re is not None and _breaking_call_re.search(content):
+                for idx, line in enumerate(lines, start=1):
+                    for m_call in _breaking_call_re.finditer(line):
+                        short_n = m_call.group(1)
+                        for qname in breaking_qnames_by_short.get(short_n, ()):
+                            sc_obj = breaking_by_qname[qname]
                             if (
                                 rel_path == sc_obj.file_path
                                 and sc_obj.target_line_span
                                 and sc_obj.target_line_span.start_line == idx
                             ):
                                 continue
-                            if re.search(rf"\b{re.escape(short_n)}\s*\(", line):
-                                if len(caller_impacts.get(qname, [])) < 10:
-                                    caller_impacts.setdefault(qname, []).append(
-                                        CallerImpactItem(
-                                            caller_file=rel_path,
-                                            caller_symbol=short_n,
-                                            line_number=idx,
-                                            call_snippet=line.strip()[:160],
-                                            resolution_confidence="heuristic_name_match",
-                                        )
+                            if len(caller_impacts.get(qname, [])) < 10:
+                                caller_impacts.setdefault(qname, []).append(
+                                    CallerImpactItem(
+                                        caller_file=rel_path,
+                                        caller_symbol=short_n,
+                                        line_number=idx,
+                                        call_snippet=line.strip()[:160],
+                                        resolution_confidence="heuristic_name_match",
                                     )
+                                )
 
         elif is_md and breaking_qnames_by_short:
             lines = content.splitlines()
@@ -1889,6 +2050,13 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
         )
         return eid
 
+    # Pre-collect target symbols across non-Python files to detect cross-header/module relocations (BUG-032)
+    all_target_multilang_symbols: dict[str, set[str]] = {}
+    for t_path, t_blob in extraction.target_blobs.items():
+        if t_path.endswith(SUPPORTED_NON_PY_CODE_EXTS) and t_blob:
+            for sym_k in _parse_multilang_symbols(t_blob, t_path):
+                all_target_multilang_symbols.setdefault(sym_k, set()).add(t_path)
+
     for fdelta in extraction.changed_files:
         fpath = fdelta.file_path
         if fdelta.is_test_file or fdelta.is_doc_file:
@@ -1896,6 +2064,10 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
 
         base_src = extraction.base_blobs.get(fpath, "")
         target_src = extraction.target_blobs.get(fpath, "")
+
+        # Guard against asymmetric blob loads on modified files (e.g. one side > MAX_SOURCE_BLOB_BYTES) (BUG-032)
+        if fdelta.status == "modified" and (not base_src or not target_src):
+            continue
 
         if fpath.endswith(".py"):
             old_syms = _parse_python_symbols(base_src, file_path=fpath, init_reexports=init_reexports) if base_src else {}
@@ -2036,6 +2208,16 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
         elif fpath.endswith(SUPPORTED_NON_PY_CODE_EXTS):
             old_ts = _parse_multilang_symbols(base_src, fpath) if base_src else {}
             new_ts = _parse_multilang_symbols(target_src, fpath) if target_src else {}
+            old_rec_info = detect_multilang_recursive_functions(base_src, fpath) if base_src else {}
+            rec_info = detect_multilang_recursive_functions(target_src, fpath) if target_src else {}
+            has_forwarding_include = bool(
+                target_src
+                and (
+                    "#include " in target_src
+                    or "export *" in target_src
+                    or "export {" in target_src
+                )
+            )
             ts_export_reason = (
                 f"Exported from package entrypoint `{fpath}`"
                 if Path(fpath).stem in ("index", "mod", "lib")
@@ -2045,7 +2227,13 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
             for name, (kind, old_line, old_sig, old_params, old_ret) in old_ts.items():
                 if name not in new_ts:
                     b_span = LineSpan(start_line=old_line, end_line=old_line)
-                    reason = f"Exported {kind} '{name}' was removed from {fpath}."
+                    relocated_to = sorted(all_target_multilang_symbols.get(name, set()) - {fpath})
+                    is_relocated_forwarded = bool(relocated_to and has_forwarding_include)
+                    reason = (
+                        f"Symbol {kind} '{name}' was relocated from {fpath} to {relocated_to[0]} with header/module forwarding."
+                        if is_relocated_forwarded
+                        else f"Exported {kind} '{name}' was removed from {fpath}."
+                    )
                     eid = _register_symbol_evidence(fpath, b_span, None, f"- {old_sig}", reason)
                     sc = SymbolSignatureChange(
                         file_path=fpath,
@@ -2054,10 +2242,10 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
                         change_kind="removed",
                         old_signature=old_sig,
                         new_signature=None,
-                        is_breaking_candidate=True,
+                        is_breaking_candidate=not is_relocated_forwarded,
                         is_public_api_export=True,
                         public_api_exposure_reason=ts_export_reason,
-                        severity="high",
+                        severity="low" if is_relocated_forwarded else "high",
                         details=reason,
                         base_line_span=b_span,
                         evidence_ids=[eid],
@@ -2067,17 +2255,23 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
                     modified_symbol_names.add(name)
                 else:
                     _, new_line, new_sig, new_params, new_ret = new_ts[name]
-                    if old_sig != new_sig:
+                    _, old_rec_errors = old_rec_info.get(name, (False, []))
+                    _, rec_errors = rec_info.get(name, (False, []))
+                    newly_introduced_rec_error = bool(rec_errors and not old_rec_errors)
+                    if old_sig != new_sig or newly_introduced_rec_error:
                         b_span = LineSpan(start_line=old_line, end_line=old_line)
                         t_span = LineSpan(start_line=new_line, end_line=new_line)
-                        old_req = [p for p in old_params if "=" not in p and "?" not in p]
-                        new_req = [p for p in new_params if "=" not in p and "?" not in p]
+                        old_req = [p for p in old_params if "=" not in p and "?" not in p and "..." not in p]
+                        new_req = [p for p in new_params if "=" not in p and "?" not in p and "..." not in p]
                         is_brk = (
-                            len(new_req) > len(old_req)
+                            bool(rec_errors)
+                            or len(new_req) > len(old_req)
                             or len(new_params) < len(old_params)
                             or (old_ret != new_ret and old_ret is not None)
                         )
                         reason = f"Exported {kind} '{name}' signature changed from '{old_sig}' to '{new_sig}'."
+                        if rec_errors:
+                            reason += f" Recursive self-call bug: {rec_errors[0]}"
                         eid = _register_symbol_evidence(fpath, b_span, t_span, f"- {old_sig}\n+ {new_sig}", reason)
                         sc = SymbolSignatureChange(
                             file_path=fpath,
@@ -2123,6 +2317,28 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
                     symbol_changes.append(sc)
                     fdelta.symbol_changes.append(sc)
                     modified_symbol_names.add(name)
+
+                    _, rec_errors = rec_info.get(name, (False, []))
+                    if rec_errors:
+                        rec_reason = f"Broken recursive self-call in `{name}` ({fpath}): {rec_errors[0]}"
+                        rec_eid = _register_symbol_evidence(fpath, None, t_span, f"+ {new_sig}", rec_reason)
+                        rec_sc = SymbolSignatureChange(
+                            file_path=fpath,
+                            symbol_name=name,
+                            symbol_kind=kind,  # type: ignore[arg-type]
+                            change_kind="signature_changed",
+                            old_signature=None,
+                            new_signature=new_sig,
+                            is_breaking_candidate=True,
+                            is_public_api_export=True,
+                            public_api_exposure_reason=ts_export_reason,
+                            severity="high",
+                            details=rec_reason,
+                            target_line_span=t_span,
+                            evidence_ids=[rec_eid],
+                        )
+                        symbol_changes.append(rec_sc)
+                        fdelta.symbol_changes.append(rec_sc)
 
     (
         caller_impacts,

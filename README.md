@@ -450,39 +450,42 @@ For **v1.1.0**, Athena cloned and evaluated **55 brand-new, actively maintained 
 - **Repositories with `>= 100` Commits Inspected**: **`55 / 55` (`100.0%`)**
 - **Passed Deep-History (`100` Commits) & 4/4 MCP Tool Suite Evaluation**: **`55 / 55` (`100.0%` pass rate)**
 - **Total Commits Inspected Across v1.1.0 Corpus**: **`5,500` commits**
-- **Total Diff Hunks Processed**: **`5,319` diff hunks**
-- **Average Duration per Repository (100 Commits)**: **`42.36s`**
+- **Total Diff Hunks Processed**: **`10,680` diff hunks**
+- **Total Recursive Functions Analyzed (Multi-Language)**: **`411` recursive functions**
+- **Average Duration per Repository (100 Commits)**: **`45.26s`**
 
 #### Representative Multi-Language Sample from the 55 Passed v1.1.0 Repositories (`HEAD~100..HEAD`)
 
-| Repository | Language | Stars | Range Tested | Total Commits | Inspected Commits | Diffs | Files Changed | Structural Files | AST Symbols | Potential Breaks | MCP Tools | Engine / Model | Duration |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`sveltejs/svelte`** | JavaScript | 80,500 | `f2648b35..40bb0848` | 100 | 100 | 25 | 381 | 220 | 0 | 0 | 4/4 OK | `deterministic_engine` | 64.19s |
-| **`gin-gonic/gin`** | Go | 79,500 | `58135f06..0f09c3a9` | 100 | 100 | 161 | 59 | 43 | 66 | 4 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 50.02s |
-| **`ocornut/imgui`** | C++ | 62,000 | `ed8ed8bb..4be0b47e` | 100 | 100 | 56 | 48 | 37 | 1 | 0 | 4/4 OK | `deterministic_engine` | 27.69s |
-| **`scrapy/scrapy`** | Python | 53,500 | `eb744fe9..e1111a0f` | 100 | 100 | 119 | 246 | 209 | 1 | 0 | 4/4 OK | `deterministic_engine` | 41.24s |
-| **`sharkdp/bat`** | Rust | 50,500 | `f1137453..f748c1a4` | 292 | 100 | 108 | 87 | 28 | 13 | 0 | 4/4 OK | `deterministic_engine` | 23.05s |
-| **`BurntSushi/ripgrep`** | Rust | 50,000 | `5748f81b..3fce3b5b` | 100 | 100 | 113 | 69 | 40 | 19 | 1 | 4/4 OK | `deterministic_engine` | 19.55s |
-| **`jekyll/jekyll`** | Ruby | 49,500 | `0f03b31b..97c3bdc8` | 100 | 100 | 35 | 82 | 26 | 0 | 1 | 4/4 OK | `deterministic_engine` | 22.95s |
-| **`pmndrs/zustand`** | TypeScript | 49,000 | `a124d59c..d7a5583c` | 100 | 100 | 33 | 75 | 15 | 0 | 0 | 4/4 OK | `deterministic_engine` | 20.20s |
-| **`ReactiveX/RxJava`** | Java | 48,000 | `c027d005..ee4a29e1` | 104 | 100 | 82 | 205 | 183 | 25 | 0 | 4/4 OK | `deterministic_engine` | 49.48s |
-| **`nlohmann/json`** | C++ | 43,500 | `0c446267..4da932f5` | 100 | 100 | 60 | 311 | 141 | 0 | 0 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 66.15s |
-| **`spf13/cobra`** | Go | 38,500 | `66b215ba..adbc8813` | 105 | 100 | 174 | 40 | 23 | 61 | 10 | 4/4 OK | `deterministic_engine` | 16.17s |
-| **`trpc/trpc`** | TypeScript | 35,500 | `cdbc2804..1c9bf51e` | 100 | 100 | 30 | 479 | 367 | 6 | 0 | 4/4 OK | `deterministic_engine` | 45.98s |
-| **`google/googletest`** | C++ | 35,000 | `a35bc769..b66cffcd` | 123 | 100 | 118 | 75 | 55 | 10 | 1 | 4/4 OK | `deterministic_engine` | 19.85s |
-| **`gofiber/fiber`** | Go | 34,500 | `eb6e578f..4c6841b3` | 422 | 100 | 97 | 232 | 148 | 46 | 5 | 4/4 OK | `deterministic_engine` | 39.23s |
-| **`nothings/stb`** | C | 27,500 | `7a69424f..a7d4c217` | 347 | 100 | 107 | 76 | 47 | 247 | 60 | 4/4 OK | `deterministic_engine` | 74.78s |
-| **`tokio-rs/tokio`** | Rust | 27,500 | `decfd115..ce685ee6` | 270 | 100 | 59 | 268 | 248 | 32 | 0 | 4/4 OK | `deterministic_engine` | 46.57s |
-| **`rollup/rollup`** | JavaScript | 25,500 | `4b6bc39e..e70c19b9` | 100 | 100 | 41 | 445 | 353 | 2 | 1 | 4/4 OK | `ollama:gemma:latest` | 89.16s |
-| **`gabime/spdlog`** | C++ | 25,000 | `6fa36017..76d45805` | 100 | 100 | 85 | 151 | 137 | 11 | 5 | 4/4 OK | `deterministic_engine` | 16.01s |
-| **`libuv/libuv`** | C | 24,500 | `972e78f9..bbd08cc8` | 100 | 100 | 55 | 111 | 87 | 2 | 0 | 4/4 OK | `deterministic_engine` | 23.03s |
-| **`guzzle/guzzle`** | PHP | 23,300 | `7e93caca..b920e5fc` | 167 | 100 | 193 | 105 | 86 | 0 | 0 | 4/4 OK | `deterministic_engine` | 24.70s |
-| **`fmtlib/fmt`** | C++ | 21,000 | `0cf9f5c9..0fc31633` | 100 | 100 | 120 | 53 | 35 | 159 | 78 | 4/4 OK | `deterministic_engine` | 41.28s |
-| **`DapperLib/Dapper`** | C# | 17,800 | `02c92d99..eb47546a` | 102 | 100 | 101 | 166 | 109 | 23 | 6 | 4/4 OK | `deterministic_engine` | 23.19s |
-| **`pytest-dev/pytest`** | Python | 12,200 | `a3a62a0e..49ea4d08` | 222 | 100 | 25 | 174 | 87 | 0 | 0 | 4/4 OK | `ollama:gemma:latest` | 43.06s |
-| **`DaveGamble/cJSON`** | C | 11,200 | `98ecc024..6d9f2443` | 133 | 100 | 143 | 31 | 15 | 1 | 0 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 41.82s |
-| **`lz4/lz4`** | C | 10,600 | `9da37b2e..1deef0b7` | 272 | 100 | 202 | 70 | 31 | 31 | 6 | 4/4 OK | `deterministic_engine` | 20.43s |
-| **`serde-rs/serde`** | Rust | 10,100 | `e3eaa6a3..0db9b3b5` | 208 | 100 | 112 | 103 | 68 | 38 | 9 | 4/4 OK | `deterministic_engine` | 30.72s |
+| Repository | Language | Stars | Range Tested | Total Commits | Inspected Commits | Diffs | Files Changed | Structural Files | Rec Fns | AST Symbols | Potential Breaks | MCP Tools | Engine / Model | Duration |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`sveltejs/svelte`** | JavaScript | 80,500 | `f2648b35..40bb0848` | 100 | 100 | 76 | 381 | 220 | 12 | 16 | 3 | 4/4 OK | `deterministic_engine` | 88.70s |
+| **`gin-gonic/gin`** | Go | 79,500 | `58135f06..0f09c3a9` | 100 | 100 | 188 | 59 | 43 | 6 | 30 | 5 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 54.82s |
+| **`ocornut/imgui`** | C++ | 62,000 | `ed8ed8bb..4be0b47e` | 100 | 100 | 257 | 48 | 37 | 21 | 33 | 14 | 4/4 OK | `deterministic_engine` | 36.50s |
+| **`scrapy/scrapy`** | Python | 53,500 | `eb744fe9..e1111a0f` | 100 | 100 | 193 | 246 | 209 | 1 | 30 | 6 | 4/4 OK | `deterministic_engine` | 58.19s |
+| **`sharkdp/bat`** | Rust | 50,500 | `f1137453..f748c1a4` | 292 | 100 | 150 | 87 | 28 | 4 | 83 | 3 | 4/4 OK | `deterministic_engine` | 23.82s |
+| **`BurntSushi/ripgrep`** | Rust | 50,000 | `5748f81b..3fce3b5b` | 100 | 100 | 157 | 69 | 40 | 10 | 204 | 5 | 4/4 OK | `deterministic_engine` | 24.42s |
+| **`jekyll/jekyll`** | Ruby | 49,500 | `0f03b31b..97c3bdc8` | 100 | 100 | 50 | 82 | 26 | 1 | 7 | 1 | 4/4 OK | `deterministic_engine` | 13.76s |
+| **`pmndrs/zustand`** | TypeScript | 49,000 | `a124d59c..d7a5583c` | 100 | 100 | 65 | 75 | 15 | 1 | 2 | 0 | 4/4 OK | `deterministic_engine` | 12.27s |
+| **`ReactiveX/RxJava`** | Java | 48,000 | `c027d005..ee4a29e1` | 104 | 100 | 101 | 205 | 183 | 40 | 45 | 10 | 4/4 OK | `deterministic_engine` | 48.32s |
+| **`nlohmann/json`** | C++ | 43,500 | `0c446267..4da932f5` | 100 | 100 | 1146 | 311 | 141 | 25 | 191 | 18 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 64.36s |
+| **`spf13/cobra`** | Go | 38,500 | `66b215ba..adbc8813` | 105 | 100 | 227 | 40 | 23 | 9 | 26 | 8 | 4/4 OK | `deterministic_engine` | 12.02s |
+| **`trpc/trpc`** | TypeScript | 35,500 | `cdbc2804..1c9bf51e` | 100 | 100 | 95 | 479 | 367 | 7 | 25 | 1 | 4/4 OK | `deterministic_engine` | 64.39s |
+| **`colinhacks/zod`** | TypeScript | 35,000 | `3195ed01..afdac65e` | 100 | 100 | 153 | 227 | 172 | 6 | 40 | 0 | 4/4 OK | `ollama:gemma:latest` | 84.16s |
+| **`google/googletest`** | C++ | 35,000 | `a35bc769..b66cffcd` | 123 | 100 | 208 | 75 | 55 | 16 | 21 | 3 | 4/4 OK | `deterministic_engine` | 30.44s |
+| **`gofiber/fiber`** | Go | 34,500 | `eb6e578f..4c6841b3` | 422 | 100 | 139 | 232 | 148 | 3 | 74 | 6 | 4/4 OK | `deterministic_engine` | 41.75s |
+| **`nothings/stb`** | C | 27,500 | `7a69424f..a7d4c217` | 347 | 100 | 473 | 76 | 47 | 11 | 34 | 5 | 4/4 OK | `deterministic_engine` | 22.39s |
+| **`tokio-rs/tokio`** | Rust | 27,500 | `decfd115..ce685ee6` | 270 | 100 | 87 | 268 | 248 | 16 | 44 | 1 | 4/4 OK | `deterministic_engine` | 50.95s |
+| **`rollup/rollup`** | JavaScript | 25,500 | `4b6bc39e..e70c19b9` | 100 | 100 | 87 | 445 | 353 | 0 | 21 | 8 | 4/4 OK | `ollama:gemma:latest` | 89.23s |
+| **`gabime/spdlog`** | C++ | 25,000 | `6fa36017..76d45805` | 100 | 100 | 128 | 151 | 137 | 2 | 16 | 6 | 4/4 OK | `deterministic_engine` | 22.64s |
+| **`libuv/libuv`** | C | 24,500 | `972e78f9..bbd08cc8` | 100 | 100 | 108 | 111 | 87 | 5 | 8 | 0 | 4/4 OK | `deterministic_engine` | 32.90s |
+| **`guzzle/guzzle`** | PHP | 23,300 | `7e93caca..b920e5fc` | 167 | 100 | 342 | 105 | 86 | 13 | 230 | 13 | 4/4 OK | `deterministic_engine` | 20.00s |
+| **`fmtlib/fmt`** | C++ | 21,000 | `0cf9f5c9..0fc31633` | 100 | 100 | 155 | 53 | 35 | 20 | 415 | 8 | 4/4 OK | `deterministic_engine` | 25.39s |
+| **`simdjson/simdjson`** | C++ | 19,500 | `edd9760b..fc358c5c` | 100 | 100 | 231 | 206 | 134 | 17 | 119 | 27 | 4/4 OK | `deterministic_engine` | 53.54s |
+| **`DapperLib/Dapper`** | C# | 17,800 | `02c92d99..eb47546a` | 102 | 100 | 228 | 166 | 109 | 7 | 42 | 13 | 4/4 OK | `deterministic_engine` | 26.79s |
+| **`pytest-dev/pytest`** | Python | 12,200 | `a3a62a0e..49ea4d08` | 222 | 100 | 242 | 174 | 87 | 11 | 30 | 19 | 4/4 OK | `ollama:gemma:latest` | 73.18s |
+| **`DaveGamble/cJSON`** | C | 11,200 | `98ecc024..6d9f2443` | 133 | 100 | 150 | 31 | 15 | 5 | 1 | 0 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 41.32s |
+| **`lz4/lz4`** | C | 10,600 | `9da37b2e..1deef0b7` | 272 | 100 | 267 | 70 | 31 | 23 | 60 | 9 | 4/4 OK | `deterministic_engine` | 29.12s |
+| **`serde-rs/serde`** | Rust | 10,100 | `e3eaa6a3..0db9b3b5` | 208 | 100 | 153 | 103 | 68 | 1 | 40 | 8 | 4/4 OK | `deterministic_engine` | 35.69s |
 
 *Complete 55-repository v1.1.0 report is preserved in [`tests/evaluation/results/EVALUATION_REPORT.md`](tests/evaluation/results/EVALUATION_REPORT.md) and machine-readable data in [`tests/evaluation/results/evaluation_results.json`](tests/evaluation/results/evaluation_results.json). Additionally, Athena's initial 85-repository 50-commit evaluation (`4,398,500+` cumulative stars across `facebook/react`, `microsoft/vscode`, `huggingface/transformers`, `vercel/next.js`, `golang/go`, `ollama/ollama`, `nodejs/node`, `pytorch/pytorch`, `django/django`, `tiangolo/fastapi`, etc.) achieved a 98.8% pass rate on reachable 50+ commit histories.*
 
@@ -520,7 +523,7 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ### Engineering Defect Reports
 
-- **Bug Reports (BUG-001 through BUG-030)**: Full root-cause analysis and resolution records for **30 isolated engineering defects** (including evaluation depth, Windows process tree termination, packfile permission locks, metric conflation, unguarded parameter fallbacks, SemVer `+` build metadata, NTFS Alternate Data Stream injection, Windows reserved device names, positional-only parameter markers, `@staticmethod` argument preservation, `@property` getter/setter coexistence, TypeScript generic functions, aliased imports, `.gitconfig` `diff.noprefix` spoofing immunity, historical Git blob caller lookup, Markdown call-arity drift in modified docs, `StrEnum` migration & Enum member diffing, body-only function mutation test-gap tracking, pre-filter coverage calculation on multi-language repos, self-recursive caller blindspot & broken recursive arity (`BUG-021`), unconditional infinite recursion & unqualified method self-calls (`BUG-022`), deep AST `RecursionError` hardening (`BUG-023`), multi-class method short-name collision (`BUG-024`), local Ollama `gemma:latest` 7B VRAM swap eviction & JSON normalization (`BUG-025`), MCP tool error boundaries & `bool`-as-`int` validation (`BUG-026`), `pytest` cache recursion isolation (`BUG-027`), partial-clone `--numstat` / `-M` lazy network fetch timeouts (`BUG-028`), redundant `HEAD` blob subprocess storms (`BUG-029`), and optional parameter insertion before positional parameters (`BUG-030`)) are cataloged in [`tests/evaluation/results/BUG_REPORTS.md`](tests/evaluation/results/BUG_REPORTS.md).
+- **Bug Reports (BUG-001 through BUG-039)**: Full root-cause analysis and resolution records for **39 isolated engineering defects** (including evaluation depth, Windows process tree termination, packfile permission locks, metric conflation, unguarded parameter fallbacks, SemVer `+` build metadata, NTFS Alternate Data Stream injection, Windows reserved device names, positional-only parameter markers, `@staticmethod` argument preservation, `@property` getter/setter coexistence, TypeScript generic functions, aliased imports, `.gitconfig` `diff.noprefix` spoofing immunity, historical Git blob caller lookup, Markdown call-arity drift in modified docs, `StrEnum` migration & Enum member diffing, body-only function mutation test-gap tracking, pre-filter coverage calculation on multi-language repos, self-recursive caller blindspot & broken recursive arity (`BUG-021`), unconditional infinite recursion & unqualified method self-calls (`BUG-022`), deep AST `RecursionError` hardening (`BUG-023`), multi-class method short-name collision (`BUG-024`), local Ollama `gemma:latest` 7B VRAM swap eviction & JSON normalization (`BUG-025`), MCP tool error boundaries & `bool`-as-`int` validation (`BUG-026`), `pytest` cache recursion isolation (`BUG-027`), partial-clone `--numstat` / `-M` lazy network fetch timeouts (`BUG-028`), redundant `HEAD` blob subprocess storms (`BUG-029`), optional parameter insertion before positional parameters (`BUG-030`), alphabetical doc/test AST blob starvation (`BUG-031`), cross-header `#include` relocation & asymmetric blob guards (`BUG-032`), $O(\text{files} \times \text{symbols} \times \text{lines})$ caller regex compilation speedup (`BUG-033`), C++ namespace indentation & Ruby `def self.foo` collisions (`BUG-034`), multi-language recursive function & broken self-call arity detection (`BUG-035`), `gemma:latest` token truncation on long monorepo paths (`BUG-036`), delegated `$obj->method()` & `parent::method()` recursion immunity (`BUG-037`), C++ `return call("lit");` statement immunity (`BUG-038`), and multi-language test file detection (`BUG-039`)) are cataloged in [`tests/evaluation/results/BUG_REPORTS.md`](tests/evaluation/results/BUG_REPORTS.md).
 
 ---
 
@@ -537,7 +540,7 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ## Current Scope & Limitations
 
-- **Language AST & Structural Support**: Full AST contract and recursion defect analysis (parameter defaults, body guards, return types, exception raises, base classes, Enum members, public constants, recursive self-call arity, and infinite recursion base-case detection) is implemented for **Python**. Multi-language structural symbol, signature, parameter arity, visibility, and export diffing is supported for **TypeScript, JavaScript, C++, C, Go, Rust, Java, Kotlin, Scala, C#, Ruby, PHP, and Swift**.
+- **Language AST & Structural Support**: Full AST contract and recursion defect analysis (parameter defaults, body guards, return types, exception raises, base classes, Enum members, public constants, recursive self-call arity, and infinite recursion base-case detection) is implemented for **Python**. Multi-language structural symbol, signature, parameter arity, visibility, export diffing, and recursive self-call arity analysis is supported for **TypeScript, JavaScript, C++, C, Go, Rust, Java, Kotlin, Scala, C#, Ruby, PHP, and Swift**.
 - **Inter-file Caller Resolution & Dynamic Dispatch**: Static caller analysis resolves callers across local modules within the same repository using import hierarchy tracking (including aliased imports and self-recursive calls) and verifies call-site argument arity. When reflection (`getattr`), dynamic imports (`importlib.import_module`), or bracket dispatch (`handlers[action]()`) are present, Athena explicitly flags them in `unresolved_dynamic_calls` and adjusts `analysis_coverage.overall_blast_radius_confidence` so reviewers know the exact boundary of static analysis.
 - **Read-Only Operation**: Athena does not write tags, create branches, or commit code to external repositories.
 
@@ -545,10 +548,10 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ## Running the Automated Test Suite
 
-Athena features a comprehensive automated test suite covering all functional capabilities, multi-language structural diffing, security boundaries, MCP stdio protocol roundtrips, recursive function edge cases, and live `gemma:latest` (Gemma 7B) & `qwen2.5-coder:7b` integration (**117 tests**):
+Athena features a comprehensive automated test suite covering all functional capabilities, multi-language structural & recursive diffing, security boundaries, MCP stdio protocol roundtrips, recursive function edge cases, and live `gemma:latest` (Gemma 7B) & `qwen2.5-coder:7b` integration (**121 tests**):
 
 ```bash
-# Run complete test suite (117 tests across unit, protocol, and real-world edge cases)
+# Run complete test suite (121 tests across unit, protocol, and real-world edge cases)
 python -m pytest -v
 
 # Run 19-scenario ground-truth semantic quality & Gemma 7B / Qwen 7B benchmark

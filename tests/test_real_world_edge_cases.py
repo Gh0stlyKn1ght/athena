@@ -1210,3 +1210,166 @@ def test_v1_1_multilang_structural_diffing_cpp_go_rust_java(tmp_path: Path) -> N
         assert sym_name in by_sym, f"Missing multi-language symbol {sym_name}"
         assert by_sym[sym_name].is_breaking_candidate is True
 
+
+# =========================================================================
+# EDGE CASE GROUP 9: v1.1 MULTI-LANGUAGE RECURSIVE & STRUCTURAL BUG HUNT (BUG-031 TO BUG-039)
+# =========================================================================
+
+def test_bug_031_and_bug_039_priority_ast_blob_selection_over_docs_and_multilang_tests(tmp_path: Path) -> None:
+    """BUG-031 & BUG-039: Dozens of modified .md/.changeset/docs and multi-language test files (_test.go, *Test.java, *Test.php, *_spec.rb) sorting before src/ must not starve production code blobs."""
+    repo = tmp_path / "starvation_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+    _git(repo, "config", "remote.origin.promisor", "true")
+    _git(repo, "config", "remote.origin.partialclonefilter", "blob:none")
+
+    changeset_dir = repo / ".changeset"
+    changeset_dir.mkdir()
+    docs_dir = repo / "a_docs"
+    docs_dir.mkdir()
+    tests_dir = repo / "b_tests"
+    tests_dir.mkdir()
+    src_dir = repo / "src"
+    src_dir.mkdir()
+
+    for i in range(20):
+        (changeset_dir / f"note_{i:02d}.md").write_text(f"# Note {i}\n", encoding="utf-8")
+        (docs_dir / f"guide_{i:02d}.rst").write_text(f"Guide {i}\n", encoding="utf-8")
+        (tests_dir / f"worker_{i:02d}_test.go").write_text(f"package b_tests\nfunc TestWorker{i}() {{}}\n", encoding="utf-8")
+        (tests_dir / f"Client{i:02d}Test.php").write_text(f"<?php class Client{i}Test {{}}\n", encoding="utf-8")
+
+    (src_dir / "client.php").write_text(
+        "<?php\nclass HttpClient {\n    public function request(string $url): array {\n        return [];\n    }\n}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial repo with docs, tests, and src/client.php")
+    _git(repo, "tag", "v1.0")
+
+    for i in range(20):
+        (changeset_dir / f"note_{i:02d}.md").write_text(f"# Updated Note {i}\n", encoding="utf-8")
+        (docs_dir / f"guide_{i:02d}.rst").write_text(f"Updated Guide {i}\n", encoding="utf-8")
+        (tests_dir / f"worker_{i:02d}_test.go").write_text(f"package b_tests\nfunc TestWorker{i}() {{ return }}\n", encoding="utf-8")
+        (tests_dir / f"Client{i:02d}Test.php").write_text(f"<?php class Client{i}Test {{ public function testA() {{}} }}\n", encoding="utf-8")
+
+    (src_dir / "client.php").write_text(
+        "<?php\nclass HttpClient {\n    public function request(string $url, array $headers): array {\n        return $headers;\n    }\n}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat!: require headers in HttpClient::request")
+
+    extraction = extract_revision_range_data(repo, base_ref="v1.0", target_ref="HEAD")
+    assert "src/client.php" in extraction.base_blobs
+    assert "src/client.php" in extraction.target_blobs
+    structural = run_structural_code_analysis(extraction)
+    by_sym = {sc.symbol_name: sc for sc in structural.symbol_changes}
+    assert "request" in by_sym
+    assert by_sym["request"].is_breaking_candidate is True
+
+
+def test_bug_032_cross_header_include_relocation_not_flagged_as_breaking(tmp_path: Path) -> None:
+    """BUG-032: Moving a C/C++ symbol from include/fmt/base.h to include/fmt/core.h while base.h #includes core.h must not be flagged as a breaking removal."""
+    repo = tmp_path / "header_reloc_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    inc = repo / "include" / "fmt"
+    inc.mkdir(parents=True)
+    (inc / "base.h").write_text(
+        "int format_value(int x) {\n    return x + 1;\n}\n",
+        encoding="utf-8",
+    )
+    (inc / "core.h").write_text(
+        "int core_helper(int y) {\n    return y;\n}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial headers")
+    _git(repo, "tag", "v1.0")
+
+    (inc / "base.h").write_text(
+        '#include "core.h"\n',
+        encoding="utf-8",
+    )
+    (inc / "core.h").write_text(
+        "int core_helper(int y) {\n    return y;\n}\n"
+        "int format_value(int x) {\n    return x + 1;\n}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "refactor: relocate format_value from base.h to core.h with include forwarding")
+
+    extraction = extract_revision_range_data(repo, base_ref="v1.0", target_ref="HEAD")
+    structural = run_structural_code_analysis(extraction)
+    removed_syms = [sc for sc in structural.symbol_changes if sc.symbol_name == "format_value" and sc.change_kind == "removed"]
+    assert len(removed_syms) == 1
+    assert removed_syms[0].is_breaking_candidate is False
+    assert "relocated" in removed_syms[0].details
+
+
+def test_bug_034_and_bug_038_cpp_indented_functions_ruby_self_methods_and_return_statement_immunity() -> None:
+    """BUG-034 & BUG-038: Indented C++ functions inside namespaces/classes must be parsed without matching `return func(a, "str");` statements, and Ruby `def self.foo` methods must preserve `self.foo` names."""
+    from athena.ast_analyzer import _parse_multilang_symbols
+
+    cpp_src = (
+        "namespace detail {\n"
+        "    bool get_cbor_string(int len, char* out) {\n"
+        '        return read_bytes(len, "cbor_context");\n'
+        "    }\n"
+        "}\n"
+    )
+    cpp_syms = _parse_multilang_symbols(cpp_src, "include/nlohmann/binary_reader.hpp")
+    assert "get_cbor_string" in cpp_syms
+    assert "read_bytes" not in cpp_syms, "C++ return statement `return read_bytes(...);` must not be parsed as a function declaration!"
+
+    rb_src = (
+        "class Site\n"
+        "  def self.process(config)\n"
+        "    true\n"
+        "  end\n"
+        "  def self.reset(config, force)\n"
+        "    false\n"
+        "  end\n"
+        "end\n"
+    )
+    rb_syms = _parse_multilang_symbols(rb_src, "lib/jekyll/site.rb")
+    assert "self.process" in rb_syms
+    assert "self.reset" in rb_syms
+    assert "self" not in rb_syms
+
+
+def test_bug_035_and_bug_037_multilang_recursive_function_detection_and_delegated_call_immunity(tmp_path: Path) -> None:
+    """BUG-035 & BUG-037: Multi-language recursive function analyzer must detect real recursion and broken self-call arity across TS/C++/Go/Rust/PHP while ignoring delegated `$this->factory->createUri($uri)` calls."""
+    from athena.ast_analyzer import count_recursive_functions_in_source, detect_multilang_recursive_functions
+
+    php_delegated = (
+        "<?php\n"
+        "class Utils {\n"
+        "    public static function uriFor($uri): UriInterface {\n"
+        "        return self::getFactory()->uriFor($uri, true);\n"
+        "    }\n"
+        "    public function createUri(string $uri, array $opts): UriInterface {\n"
+        "        return $this->uriFactory->createUri($uri);\n"
+        "    }\n"
+        "    public function walkTree(array $node, int $depth, int $maxDepth): int {\n"
+        "        if ($depth >= $maxDepth) { return $depth; }\n"
+        "        return $this->walkTree($node['child'], $depth + 1);\n"
+        "    }\n"
+        "}\n"
+    )
+    rec_map = detect_multilang_recursive_functions(php_delegated, "src/Utils.php")
+    # `createUri` calls `$this->uriFactory->createUri($uri)` (different object receiver) -> NOT recursive
+    assert "createUri" not in rec_map
+    # `walkTree` calls `$this->walkTree(...)` with 2 args instead of 3 required -> recursive + arity error
+    assert "walkTree" in rec_map
+    is_rec, errs = rec_map["walkTree"]
+    assert is_rec is True
+    assert len(errs) == 1 and "requires at least 3" in errs[0]
+    assert count_recursive_functions_in_source(php_delegated, "src/Utils.php") >= 1
+
+

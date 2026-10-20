@@ -27,7 +27,12 @@ SRC_DIR = Path(__file__).resolve().parent.parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from athena.ast_analyzer import SUPPORTED_ALL_CODE_EXTS, _parse_python_symbols, run_structural_code_analysis
+from athena.ast_analyzer import (
+    SUPPORTED_ALL_CODE_EXTS,
+    _parse_python_symbols,
+    count_recursive_functions_in_source,
+    run_structural_code_analysis,
+)
 from athena.git_inspector import extract_revision_range_data, inspect_repository_state
 from athena.mcp_server import (
     analyze_change_graph,
@@ -282,26 +287,29 @@ def evaluate_single_repo(
             1 for f in extraction.changed_files if f.file_path.endswith(SUPPORTED_ALL_CODE_EXTS)
         )
         recursive_count = 0
-        scanned_py_paths: set[str] = set()
+        scanned_code_paths: set[str] = set()
         for fpath, blob in extraction.target_blobs.items():
-            if fpath.endswith(".py") and blob:
-                scanned_py_paths.add(fpath.replace("\\", "/"))
-                syms = _parse_python_symbols(blob, file_path=fpath)
-                recursive_count += sum(1 for s in syms.values() if s.is_recursive)
-        # Also scan up to 40 Python files in the working tree to measure repository-wide recursive function coverage
-        wt_py_scanned = 0
-        for py_path in repo_dir.rglob("*.py"):
-            if wt_py_scanned >= 40:
+            if fpath.endswith(SUPPORTED_ALL_CODE_EXTS) and blob:
+                scanned_code_paths.add(fpath.replace("\\", "/"))
+                recursive_count += count_recursive_functions_in_source(blob, fpath)
+        # Also scan up to 40 code files in the working tree to measure repository-wide multi-language recursive function coverage
+        wt_code_scanned = 0
+        for code_path in repo_dir.rglob("*"):
+            if wt_code_scanned >= 40:
                 break
             try:
-                rel_p = py_path.relative_to(repo_dir).as_posix()
-                if rel_p in scanned_py_paths or any(part.startswith(".") or part in ("node_modules", "venv", "dist", "build") for part in py_path.parts):
+                if not code_path.name.endswith(SUPPORTED_ALL_CODE_EXTS) or not code_path.is_file():
                     continue
-                if py_path.is_file() and py_path.stat().st_size <= 350_000:
-                    wt_py_scanned += 1
-                    src = py_path.read_text(encoding="utf-8", errors="replace")
-                    syms = _parse_python_symbols(src, file_path=rel_p)
-                    recursive_count += sum(1 for s in syms.values() if s.is_recursive)
+                rel_p = code_path.relative_to(repo_dir).as_posix()
+                if rel_p in scanned_code_paths or any(
+                    part.startswith(".") or part in ("node_modules", "venv", "dist", "build", "vendor", "dependencies", "third_party")
+                    for part in code_path.parts
+                ):
+                    continue
+                if code_path.stat().st_size <= 350_000:
+                    wt_code_scanned += 1
+                    src = code_path.read_text(encoding="utf-8", errors="replace")
+                    recursive_count += count_recursive_functions_in_source(src, rel_p)
             except OSError:
                 continue
         eval_result["recursive_functions_analyzed"] = recursive_count
@@ -559,7 +567,7 @@ def _generate_markdown_report(summary: dict[str, Any], results: list[dict[str, A
         f"- **Repositories with >= 10,000 GitHub Stars Evaluated**: `{summary['repositories_with_10k_plus_stars']}`",
         f"- **Total Commits Inspected Across Corpus**: `{summary.get('total_commits_inspected', 0):,}`",
         f"- **Total Diff Hunks Processed**: `{summary.get('total_diffs_processed', 0):,}`",
-        f"- **Total Recursive Python Functions Analyzed**: `{summary.get('total_recursive_functions_analyzed', 0):,}`",
+        f"- **Total Recursive Functions Analyzed (Multi-Language)**: `{summary.get('total_recursive_functions_analyzed', 0):,}`",
         f"- **Passed Deep-History & Full MCP Tool Suite Evaluation**: `{summary['passed']}` ({summary['pass_rate_pct']}%)",
         f"- **Insufficient History**: `{summary['insufficient_history']}`",
         f"- **Failed / Timed Out**: `{summary['failed']}`",

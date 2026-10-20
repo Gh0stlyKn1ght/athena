@@ -398,8 +398,8 @@ def analyze_changes_with_ollama(
 
     _, resolved_model, _ = resolve_ollama_model_name(base_url=base_url, model=model)
     is_gemma = resolved_model.lower().startswith("gemma")
-    num_ctx = 1024 if is_gemma else 2048
-    num_predict = 128 if is_gemma else 768
+    num_ctx = 1536 if is_gemma else 2048
+    num_predict = 220 if is_gemma else 768
 
     # Ensure no other 7B model is occupying GPU VRAM before loading target model
     _evict_other_loaded_models(base_url, resolved_model)

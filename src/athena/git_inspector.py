@@ -37,6 +37,13 @@ LOCKFILE_AND_GENERATED_NAMES = {
 IGNORED_DIR_PREFIXES = (
     "node_modules/",
     "vendor/",
+    "dependencies/",
+    "third_party/",
+    "3rdparty/",
+    "external/",
+    "singleheader/",
+    "deprecated/",
+    ".yarn/",
     "dist/",
     "build/",
     ".venv/",
@@ -141,15 +148,46 @@ def _is_test_file(rel_path: str) -> bool:
     return (
         "/test/" in f"/{norm}"
         or "/tests/" in f"/{norm}"
+        or "/testing/" in f"/{norm}"
         or "/__tests__/" in f"/{norm}"
+        or "/spec/" in f"/{norm}"
+        or "/specs/" in f"/{norm}"
+        or "/features/" in f"/{norm}"
         or basename.startswith("test_")
-        or basename.endswith(("_test.py", ".test.ts", ".spec.ts", ".test.js", ".spec.js"))
+        or basename.endswith((
+            "_test.py",
+            ".test.ts",
+            ".spec.ts",
+            ".test.tsx",
+            ".spec.tsx",
+            ".test.js",
+            ".spec.js",
+            ".test.jsx",
+            ".spec.jsx",
+            "_test.go",
+            "_test.cpp",
+            "_test.cc",
+            "_test.c",
+            "_test.rs",
+            "_spec.rb",
+            "test.java",
+            "tests.java",
+            "test.cs",
+            "tests.cs",
+            "test.php",
+            "tests.php",
+        ))
     )
 
 
 def _is_doc_file(rel_path: str) -> bool:
     norm = rel_path.replace("\\", "/").lower()
-    return norm.endswith((".md", ".rst", ".adoc")) or norm.startswith("docs/")
+    return (
+        norm.endswith((".md", ".markdown", ".rst", ".adoc"))
+        or norm.startswith(("docs/", "doc/", "changelog/", ".changeset/"))
+        or "/docs/" in f"/{norm}"
+        or "/doc/" in f"/{norm}"
+    )
 
 
 def _parse_conventional_commit(subject: str, body: str) -> tuple[str | None, str | None, bool]:
@@ -598,7 +636,7 @@ def extract_revision_range_data(
         check=False,
     )
 
-    # Pre-collect non-lockfile paths from name_status so partial clones only diff bounded source paths
+    # Pre-collect non-lockfile paths from name_status and rank core production code files first (BUG-031)
     prelim_paths: list[str] = []
     for line in name_status_proc.stdout.splitlines():
         parts = line.split("\t")
@@ -606,6 +644,40 @@ def extract_revision_range_data(
             p = parts[-1].strip().replace("\\", "/")
             if p and not _is_lockfile_or_generated(p):
                 prelim_paths.append(p)
+
+    code_exts = (
+        ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+        ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
+        ".go", ".rs", ".java", ".kt", ".scala", ".cs", ".rb", ".php", ".swift",
+    )
+    aux_prefixes = (
+        "benchmark", "example", "sample", "script", "maint/",
+        ".github/", "features/", "demo", "tools/", "fuzz/",
+    )
+
+    def _path_priority_key(p: str) -> tuple[int, str]:
+        low = p.lower()
+        is_code = low.endswith(code_exts)
+        is_test = _is_test_file(p)
+        is_doc = _is_doc_file(p)
+        if is_code and not is_test and not is_doc:
+            is_aux = any(low.startswith(pref) or f"/{pref}" in low for pref in aux_prefixes)
+            return (1 if is_aux else 0, p)
+        if is_doc:
+            return (2, p)
+        if is_code and is_test:
+            return (3, p)
+        return (4, p)
+
+    sorted_prelim = sorted(prelim_paths, key=_path_priority_key)
+    max_ast_blob_files = 25 if is_partial else 80
+    selected_ast_code_paths = set(
+        [
+            p
+            for p in sorted_prelim
+            if p.endswith(code_exts) and not _is_test_file(p) and not _is_doc_file(p)
+        ][:max_ast_blob_files]
+    )
 
     diff_flags = [
         "--ignore-cr-at-eol",
@@ -619,16 +691,8 @@ def extract_revision_range_data(
         diff_flags.append("-M")
         path_filter_args: list[str] = []
     else:
-        # Prioritize AST/doc files first so the single batch git diff fetches all blobs needed for AST analysis
-        ast_exts = (
-            ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
-            ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
-            ".go", ".rs", ".java", ".kt", ".scala", ".cs", ".rb", ".php", ".swift",
-            ".md", ".rst",
-        )
-        priority_paths = [p for p in prelim_paths if p.endswith(ast_exts)]
-        other_paths = [p for p in prelim_paths if not p.endswith(ast_exts)]
-        path_filter_args = (priority_paths + other_paths)[:25]
+        # Ensure all selected AST code files plus top doc/test files are fetched in the single batch git diff
+        path_filter_args = sorted_prelim[:35]
 
     # Run spoof-proof unified diff (with 3 lines of context so hunks are human/LLM readable)
     if is_partial and not path_filter_args:
@@ -669,8 +733,6 @@ def extract_revision_range_data(
     changed_files: list[ChangedFileDelta] = []
     base_blobs: dict[str, str] = {}
     target_blobs: dict[str, str] = {}
-    max_ast_blob_files = 15 if is_partial else 80
-    ast_blobs_loaded = 0
     is_head_target = target_ref.strip().upper() in ("HEAD", "WORKING_TREE")
 
     for line in name_status_proc.stdout.splitlines():
@@ -775,19 +837,12 @@ def extract_revision_range_data(
         if len(joined_diff) > MAX_BOUNDED_DIFF_CHARS:
             joined_diff = joined_diff[:MAX_BOUNDED_DIFF_CHARS] + "\n... [file diff bounded]"
 
-        # Read source blobs only for files supported by AST and doc-drift engines to eliminate subprocess storms
+        # Read source blobs only for prioritized non-test code files to prevent doc/test starvation (BUG-031)
         can_load_ast_blob = (
-            file_path.endswith((
-                ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
-                ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
-                ".go", ".rs", ".java", ".kt", ".scala", ".cs", ".rb", ".php", ".swift",
-                ".md", ".rst",
-            ))
-            and ast_blobs_loaded < max_ast_blob_files
+            file_path in selected_ast_code_paths
             and (not is_partial or file_path in batched_partial_paths)
         )
         if can_load_ast_blob:
-            ast_blobs_loaded += 1
             if status_lit in ("modified", "deleted", "renamed"):
                 base_lookup_path = old_path or file_path
                 b_blob = read_blob_at_revision(repo_path, base_sha, base_lookup_path)

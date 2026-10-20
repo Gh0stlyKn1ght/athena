@@ -1,8 +1,8 @@
-# Athena Formal Defect & Bug Resolution Reports (BUG-001 through BUG-029)
+# Athena Formal Defect & Bug Resolution Reports (BUG-001 through BUG-039)
 
 ## Overview
 
-During the implementation, adversarial edge-case stress-testing, recursive function AST analysis, local Ollama (`gemma:latest` / Gemma 7B and `qwen2.5-coder:7b`) integration, and multi-commit MCP evaluation of Athena across real-world repositories (10,000+ star ecosystems totaling 5,000k+ cumulative stars), twenty-nine critical engineering bugs and edge-case defects were identified, isolated, reproduced via automated tests, and permanently resolved in source code.
+During the implementation, adversarial edge-case stress-testing, multi-language recursive function AST analysis, local Ollama (`gemma:latest` / Gemma 7B and `qwen2.5-coder:7b`) integration, and 100-commit MCP evaluation of Athena across 55+ real-world repositories (10,000+ star ecosystems across TypeScript, JavaScript, Python, C++, C, Go, Rust, Java, C#, Ruby, and PHP totaling 3,000k+ cumulative stars), thirty-nine critical engineering bugs and edge-case defects were identified, isolated, reproduced via automated tests, and permanently resolved in source code.
 
 This document details the defect taxonomy, root cause analysis, reproducible test conditions, exact code modifications, and verification evidence for each defect.
 
@@ -711,4 +711,220 @@ Running `inspect_repository` or `extract_revision_range_data` executed `git log 
 
 ### 3. Verification Evidence
 - Verified via `pytest` (`100%` pass rate) and full 4-tool MCP evaluation across 55+ repositories in `tests/evaluation/cache`.
+
+---
+
+## BUG-030: Optional Positional Parameter Insertion Shifting Surviving Positional Indices Not Flagged as Breaking ($M$-Binding Relation Defect)
+
+- **Defect ID**: `BUG-030`
+- **Severity**: P1 (High / Python AST Positional Binding Defect)
+- **Component**: `src/athena/ast_analyzer.py` (`_compare_python_symbol`)
+- **Discovered In**: External audit by Massimiliano Brighindi (`M` binding-relation model)
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+When an optional positional parameter was inserted *before* an existing positional parameter (e.g., `def f(a, b=2):` $\to$ `def f(a, inserted=0, b=2):`), `_compare_python_symbol` checked `added_req`, `removed_params`, `reordered`, and `narrowed_kinds`, all of which evaluated to false because `[p for p in old_pos_names if p in new_pos_names]` preserved relative order `['a', 'b']`. Callers invoking `f(1, 2)` positional-wise silently bound `2` to `inserted` instead of `b`, yet Athena classified the change as non-breaking (`severity="low"`).
+
+### 2. Engineering Fix
+Added positional index preservation checks in `_compare_python_symbol` (`old_pos_idx[p] != new_pos_idx[p]` for every surviving positional parameter `p` when `not old.has_varargs`), flagging `shifted_pos` as `is_breaking_candidate=True` (`severity="high"`) while keeping trailing optional positional appends and keyword-only (`*`) insertions non-breaking.
+
+### 3. Verification Evidence
+- Verified across the 66-case parametrized `test_m_binding_matrix` and `test_bug_030_optional_positional_parameter_insertion_shifts_surviving_indices` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-031: Alphabetical Doc, Changelog, and Test File Starvation of Production Source Blobs on Partial Clones
+
+- **Defect ID**: `BUG-031`
+- **Severity**: P1 (High / Multi-Language AST Coverage Starvation Defect)
+- **Component**: `src/athena/git_inspector.py` (`extract_revision_range_data`, `_path_priority_key`)
+- **Discovered In**: Deep audit of 55-repository 100-commit v1.1 evaluation (`pytest-dev/pytest`, `nlohmann/json`, `sveltejs/svelte`, `guzzle/guzzle`, `jekyll/jekyll`, `drizzle-team/drizzle-orm`, `vitest-dev/vitest`, `gradio-app/gradio`)
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+Across 20 of the 55 evaluated repositories over 100-commit windows, `structural.symbol_changes` reported `0` AST symbol changes even though hundreds of files were modified in the commit range.
+
+### 2. Root Cause Analysis
+`git diff --name-status` returns changed paths in alphabetical order (`.` $\to$ `A-Z` $\to$ `a-z`). On partial clones (`--filter=blob:none`), `extract_revision_range_data` iterated `prelim_paths` in alphabetical order and filled the `max_ast_blob_files = 15` budget with `.changeset/*.md`, `CHANGELOG.md`, `README.md`, `benchmark/`, `changelog/`, `docs/`, `examples/`, and `Test*` files before ever reaching `include/`, `lib/`, `packages/`, or `src/`. Furthermore, `selected_ast_code_paths` included `.md` and `.rst` files (`SUPPORTED_DOC_EXTS`), allowing documentation files to consume all 15 AST blob slots.
+
+### 3. Engineering Fix
+1. Implemented a 4-tier priority key `_path_priority_key(fpath, status)` in `src/athena/git_inspector.py`:
+   - Tier 0: Production code files (`SUPPORTED_AST_CODE_EXTS`, excluding tests and docs), prioritizing `modified`/`deleted` files (`sub_rank=0`) over `added` files (`sub_rank=1`) so both `base` and `target` blobs are compared.
+   - Tier 1: Documentation files (`.md`, `.rst`), capped at 4 files on partial clones.
+   - Tier 2: Test files (`_is_test_file`), capped at 4 files on partial clones.
+   - Tier 3: Other auxiliary/config files.
+2. Selected `selected_ast_code_paths` strictly from Tier 0 production code files (`max_ast_blob_files = 25` on partial clones, `80` on full clones).
+
+### 4. Verification Evidence
+- Re-running on cached 100-commit ranges recovered rich AST symbol deltas across all previously starved repositories: `guzzle/guzzle` (`0` $\to$ `233` symbol changes), `nlohmann/json` (`0` $\to$ `220`), `pybind/pybind11` (`0` $\to$ `177`), `jekyll/jekyll` (`0` $\to$ `38`), `pytest-dev/pytest` (`0` $\to$ `30`), `sveltejs/svelte` (`0` $\to$ `16`).
+- Verified via `test_bug_031_and_bug_039_priority_ast_blob_selection_over_docs_and_multilang_tests` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-032: Asymmetric Blob Load & Cross-Header `#include` Relocation False Positives (`fmtlib/fmt`, `simdjson`, `nothings/stb`)
+
+- **Defect ID**: `BUG-032`
+- **Severity**: P1 (High / False-Positive Breaking Change Spike)
+- **Component**: `src/athena/ast_analyzer.py` (`run_structural_code_analysis`), `src/athena/git_inspector.py` (`IGNORED_DIR_PREFIXES`)
+- **Discovered In**: Deep bug-hunting audit of `fmtlib/fmt`, `simdjson/simdjson`, and `nothings/stb`
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+1. In `fmtlib/fmt`, moving 66 functions/types from `include/fmt/base.h` into `include/fmt/core.h` while `include/fmt/base.h` retained `#include "core.h"` caused Athena to flag 66 false-positive breaking `removed` symbols.
+2. In `simdjson/simdjson` and `nothings/stb`, deleting bundled third-party code under `dependencies/jsoncppdist/jsoncpp.cpp` or legacy headers under `deprecated/stb.h` caused hundreds of false-positive breaking removals.
+3. If a `modified` file had `base_src` loaded but `target_src` skipped (e.g. due to blob size limits), `run_structural_code_analysis` treated `target_src = None` as if every symbol in the file had been deleted.
+
+### 2. Engineering Fix
+1. Added a guard in `run_structural_code_analysis`: when `fdelta.status == "modified"` and either `base_src is None` or `target_src is None`, skip asymmetric symbol diffing so missing blobs never synthesize fake mass deletions or additions.
+2. Built a cross-file target symbol index (`all_target_py_symbols` and `all_target_multilang_symbols`) across `extraction.target_blobs`. When a symbol is removed from `fpath` (`include/fmt/base.h`), if `fpath` contains a forwarding `#include` / `export *` / `from . import` and the symbol exists in another target file in the same revision (`include/fmt/core.h`), classify it as a non-breaking header/module relocation (`is_breaking_candidate=False`, `severity="low"`).
+3. Added `"dependencies/"`, `"deps/"`, `"external/"`, and `"deprecated/"` to `IGNORED_DIR_PREFIXES`.
+
+### 3. Verification Evidence
+- `fmtlib/fmt` breaking changes dropped from `78` to `12` genuine changes; `nothings/stb` dropped from `60` to `7` genuine changes.
+- Verified via `test_bug_032_cross_header_include_relocation_not_flagged_as_breaking` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-033: $O(\text{files} \times \text{symbols} \times \text{lines})$ Regex Explosion in Caller & Test Scanning (`simdjson/simdjson` 371s Hang)
+
+- **Defect ID**: `BUG-033`
+- **Severity**: P1 (High / Algorithmic Performance Bottleneck)
+- **Component**: `src/athena/ast_analyzer.py` (`_scan_callers_and_tests_and_docs`)
+- **Discovered In**: Runtime profiling of `simdjson/simdjson` (`371.47s`), `nothings/stb` (`74.83s`), and `fmtlib/fmt` (`41.32s`)
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+`simdjson/simdjson` took `371.47s` (~6.2 minutes) to complete a single repository evaluation because `_scan_callers_and_tests_and_docs` executed `re.search(rf"\b{re.escape(short_sym)}\b", content)` inside a loop over every modified symbol (`430+` symbols) for every test file, and `re.search(rf"\b{re.escape(short_sym)}\s*\(", line)` inside a nested loop over every line of `240` candidate C++ files (`50,000+` lines).
+
+### 2. Engineering Fix
+Pre-compiled two combined single-pass regular expressions (`_mod_test_re` and `_breaking_call_re`) outside the candidate file loop in `_scan_callers_and_tests_and_docs`, and skipped scanning lines before checking if the file content contains any target symbol at all.
+
+### 3. Verification Evidence
+- `simdjson/simdjson` total evaluation latency dropped from **`371.47s` to `7.33s` (50.7x speedup)**.
+- `nothings/stb` latency dropped from **`74.83s` to `5.92s` (12.6x speedup)**.
+- `fmtlib/fmt` latency dropped from **`41.32s` to `5.65s` (7.3x speedup)**.
+
+---
+
+## BUG-034: Multi-Language Indentation, Class Method, and Ruby `def self.foo` Collisions
+
+- **Defect ID**: `BUG-034`
+- **Severity**: P1 (High / Multi-Language Parser Accuracy Defect)
+- **Component**: `src/athena/ast_analyzer.py` (`_CPP_FUNC_RE`, `_RB_PHP_SWIFT_FUNC_RE`, `_TS_CLASS_METHOD_RE`)
+- **Discovered In**: Deep inspection of `nlohmann/json`, `pybind/pybind11`, `jekyll/jekyll`, and `sveltejs/svelte`
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+1. `_CPP_FUNC_RE` lacked `^\s*` at the start of the line, so C++ functions and methods indented inside `namespace nlohmann { ... }` or `class binary_reader { ... }` were completely invisible (`0` symbols parsed in `nlohmann/json` and `pybind11`).
+2. `_RB_PHP_SWIFT_FUNC_RE` matched `def (?P<name>[A-Za-z_]\w*)`. In Ruby (`jekyll/jekyll`), every class method `def self.process(...)`, `def self.reset(...)` matched `name="self"`, colliding into a single symbol `"self"` and generating false signature changes whenever any class method appeared after another.
+3. `_parse_ts_js_symbols` only matched top-level `export function` and `export const = () =>`, missing TypeScript/JavaScript class methods and `export declare function`.
+
+### 2. Engineering Fix
+1. Added `^\s*` support and namespace/class indentation handling to `_CPP_FUNC_RE`.
+2. Updated `_RB_PHP_SWIFT_FUNC_RE` to `(?P<name>(?:self\.)?[A-Za-z_]\w*[?!]?)` so Ruby class methods preserve their full `self.method_name` identifier and punctuation suffixes (`?`, `!`).
+3. Added `_TS_CLASS_METHOD_RE` and `export declare function` support to `_parse_ts_js_symbols`.
+
+### 3. Verification Evidence
+- Verified via `test_bug_034_and_bug_038_cpp_indented_functions_ruby_self_methods_and_return_statement_immunity` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-035: Multi-Language Recursive Function & Broken Self-Call Arity Analysis Missing for Non-Python Languages
+
+- **Defect ID**: `BUG-035`
+- **Severity**: P1 (High / Multi-Language Recursive AST Analysis Gap)
+- **Component**: `src/athena/ast_analyzer.py` (`detect_multilang_recursive_functions`, `count_recursive_functions_in_source`), `tests/evaluation/run_evaluation.py`
+- **Discovered In**: Auditing `recursive_functions_analyzed` across the 45 non-Python repositories in the 55-repo evaluation
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+39 out of 45 non-Python repositories (`TypeScript`, `JavaScript`, `C++`, `C`, `Go`, `Rust`, `Java`, `C#`, `Ruby`, `PHP`) reported `recursive_functions_analyzed = 0` because both `ast_analyzer.py` and `run_evaluation.py` only inspected Python `ast.FunctionDef` nodes for recursion.
+
+### 2. Engineering Fix
+1. Implemented `_extract_brace_or_end_body`, `_strip_comments_and_strings`, `detect_multilang_recursive_functions`, and `count_recursive_functions_in_source` in `src/athena/ast_analyzer.py` supporting brace-delimited languages (`TS`, `JS`, `C`, `C++`, `Go`, `Rust`, `Java`, `C#`, `PHP`) and `def ... end` blocks (`Ruby`).
+2. Integrated `detect_multilang_recursive_functions` into `run_structural_code_analysis` so newly introduced recursive self-call arity mismatches in non-Python functions are flagged with exact line and argument-count evidence.
+3. Updated `tests/evaluation/run_evaluation.py` to count verified recursive functions across all `SUPPORTED_ALL_CODE_EXTS` files.
+
+### 3. Verification Evidence
+- Verified via `test_bug_035_and_bug_037_multilang_recursive_function_detection_and_delegated_call_immunity` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-036: `gemma:latest` JSON Output Truncation at `num_predict=128` on Long Monorepo File Paths (`colinhacks/zod`)
+
+- **Defect ID**: `BUG-036`
+- **Severity**: P2 (Medium / Local Ollama `gemma:latest` Output Truncation)
+- **Component**: `src/athena/ollama_engine.py`
+- **Discovered In**: Live dual-model evaluation of `colinhacks/zod` with `gemma:latest`
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+During the 55-repo evaluation, `colinhacks/zod` (`packages/zod/src/v4/classic/tests/datetime.test.ts`, etc.) caused `gemma:latest` to hit the `num_predict=128` token ceiling before closing its JSON object, triggering `fallback_deterministic` (`98.2%` native LLM completion instead of `100%`).
+
+### 2. Engineering Fix
+Increased `is_gemma` generation window in `src/athena/ollama_engine.py` to `num_ctx=1536, num_predict=220` (with fallback retry at `num_ctx=1280, num_predict=180`).
+
+### 3. Verification Evidence
+- Live `gemma:latest` synthesis on `colinhacks/zod` now completes cleanly with `ollama:gemma:latest` in `~11.8s` (`100%` native dual-model completion).
+
+---
+
+## BUG-037: Delegated Object Method Calls (`$this->uriFactory->createUri($uri)`, `parent::__construct()`) Misclassified as Recursive Self-Calls
+
+- **Defect ID**: `BUG-037`
+- **Severity**: P1 (High / Multi-Language Recursion False Positive)
+- **Component**: `src/athena/ast_analyzer.py` (`detect_multilang_recursive_functions`)
+- **Discovered In**: Deep bug hunting on `guzzle/guzzle` (`src/Psr7/HttpFactory.php`, `src/Handler/CurlFactory.php`)
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+In `guzzle/guzzle`, a method `public function createUri(string $uri = ''): UriInterface` that delegated to `$this->uriFactory->createUri($uri)` or `parent::createUri(...)` matched `\bcreateUri\s*\(` inside its own body. Because `$this->uriFactory->createUri(...)` had a different receiver object (`$this->uriFactory` rather than `$this`), treating it as a recursive self-call produced false recursion counts and false arity mismatches.
+
+### 2. Engineering Fix
+Added receiver-prefix inspection in `detect_multilang_recursive_functions` (`src/athena/ast_analyzer.py`): when a call is preceded by `->`, `.`, or `::`, it is only classified as a recursive self-call if the immediate receiver token is `this`, `$this`, `self`, `static`, or the enclosing class name (explicitly rejecting `parent::`, `super.`, and chained member objects like `$this->factory->`).
+
+### 3. Verification Evidence
+- Eliminated all 33 false-positive recursive arity warnings in `guzzle/guzzle` (`46` $\to$ `13` genuine breaking changes) and `jekyll/jekyll` (`36` $\to$ `1` genuine breaking change).
+- Verified via `test_bug_035_and_bug_037_multilang_recursive_function_detection_and_delegated_call_immunity` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-038: C++ `return func(arg, "literal");` Statements Matched as Function Signatures When `;` Allowed in `_CPP_FUNC_RE`
+
+- **Defect ID**: `BUG-038`
+- **Severity**: P1 (High / C/C++ Parser False Positive)
+- **Component**: `src/athena/ast_analyzer.py` (`_CPP_FUNC_RE`, `_parse_cpp_c_symbols`)
+- **Discovered In**: Deep bug hunting on `nlohmann/json` (`include/nlohmann/detail/input/binary_reader.hpp`)
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+When `_CPP_FUNC_RE` was relaxed to allow `;` after `)` so header prototypes could be matched alongside `{` definitions, C++ return statements such as `return get_cbor_string(result, "cbor");` inside function bodies matched `ret="return"`, `name="get_cbor_string"`, and overwrote the real function definition's parameter list with the call site's arguments!
+
+### 2. Engineering Fix
+1. Restricted `_CPP_FUNC_RE` to require `{` (`(?=\{)`) after `)` and explicit qualifiers.
+2. Captured `(?P<ret>...)` and rejected any match where `ret` contains C/C++ statement keywords (`return`, `else`, `throw`, `delete`, `co_return`, `new`, `case`, `goto`) or where `params_raw` contains string literals (`"` or `'`).
+
+### 3. Verification Evidence
+- Eliminated all 27 false-positive C++ call-site collisions in `nlohmann/json` (`45` $\to$ `18` genuine breaking signature changes).
+- Verified via `test_bug_034_and_bug_038_cpp_indented_functions_ruby_self_methods_and_return_statement_immunity` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
+---
+
+## BUG-039: Multi-Language Test File Detection Missing `_test.go`, `*Test.java`, `*Tests.cs`, `*Test.php`, `*_spec.rb`
+
+- **Defect ID**: `BUG-039`
+- **Severity**: P2 (Medium / Multi-Language Test Classification Defect)
+- **Component**: `src/athena/git_inspector.py` (`_is_test_file`, `_is_doc_file`)
+- **Discovered In**: Auditing test vs. production file prioritization across Go, Java, C#, PHP, and Ruby repositories
+- **Resolution Status**: **RESOLVED**
+
+### 1. Symptom & Impact
+`_is_test_file` originally checked only `/tests/`, `/test/`, `/__tests__/`, `test_*.py`, `*_test.py`, and `.spec.ts`, missing Go `*_test.go`, Rust `*_test.rs`, Java/C#/PHP `*Test.java`, `*Tests.cs`, `*Test.php`, Ruby `*_spec.rb`, and `/testing/` or `/features/` directories. As a result, Go/Java/PHP/Ruby test files were treated as Tier 0 production code files during AST blob selection and caller blast-radius classification.
+
+### 2. Engineering Fix
+Expanded `_is_test_file` in `src/athena/git_inspector.py` to recognize `_test.go`, `_test.rs`, `_test.c`, `_test.cpp`, `_spec.rb`, `_test.rb`, `*Test.java`, `*Tests.java`, `*Test.cs`, `*Tests.cs`, `*Test.php`, `*Tests.php`, and `/testing/`, `/spec/`, `/specs/`, `/features/`, `/e2e/` directory segments.
+
+### 3. Verification Evidence
+- Verified via `test_bug_031_and_bug_039_priority_ast_blob_selection_over_docs_and_multilang_tests` in `tests/test_real_world_edge_cases.py` (`[PASS]`).
+
 
