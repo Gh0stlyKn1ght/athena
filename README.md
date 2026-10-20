@@ -6,7 +6,7 @@
 
 # Athena (`athena-mcp`)
 
-[![M8ven Score](https://m8ven.ai/badge/mcp/aaryanrwt/athena)](https://m8ven.ai/mcp/aaryanrwt/athena?s=readme)
+[![M8ven Score](https://m8ven.ai/badge/mcp/aaryanrwt-athena-bahjjw?v=ef3e04ec27b5a02ecc41f0f4966e8b74)](https://m8ven.ai/mcp/aaryanrwt-athena-bahjjw?s=readme)
 
 **Local-First, Evidence-Backed Git & AST Release-Readiness and Change-Intelligence MCP Server**
 
