@@ -1153,3 +1153,60 @@ def test_m_binding_matrix(only: bool, n: int, k: int) -> None:
         for x in analyze_python_module_diff(old, new).symbol_changes
     )
     assert actual == expected
+
+
+def test_v1_1_multilang_structural_diffing_cpp_go_rust_java(tmp_path: Path) -> None:
+    """Verify v1.1 multi-language structural signature diffing across C++, Go, Rust, and Java."""
+    repo = tmp_path / "multilang_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Tester")
+    _git(repo, "config", "user.email", "tester@example.com")
+
+    (repo / "engine.cpp").write_text(
+        "int compute_score(int a) {\n    return a * 2;\n}\n",
+        encoding="utf-8",
+    )
+    (repo / "server.go").write_text(
+        "package main\nfunc StartServer(port int) error {\n    return nil\n}\n",
+        encoding="utf-8",
+    )
+    (repo / "lib.rs").write_text(
+        "pub fn parse_token(input: &str) -> bool {\n    true\n}\n",
+        encoding="utf-8",
+    )
+    (repo / "Service.java").write_text(
+        "public class Service {\n    public int execute(String cmd) {\n        return 0;\n    }\n}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial multi-language baseline")
+    _git(repo, "tag", "v1.0")
+
+    (repo / "engine.cpp").write_text(
+        "int compute_score(int a, int weight) {\n    return a * weight;\n}\n",
+        encoding="utf-8",
+    )
+    (repo / "server.go").write_text(
+        "package main\nfunc StartServer(port int, tls bool) error {\n    return nil\n}\n",
+        encoding="utf-8",
+    )
+    (repo / "lib.rs").write_text(
+        "pub fn parse_token(input: &str, strict: bool) -> bool {\n    strict\n}\n",
+        encoding="utf-8",
+    )
+    (repo / "Service.java").write_text(
+        "public class Service {\n    public int execute(String cmd, int timeout) {\n        return timeout;\n    }\n}\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: add required parameters across C++, Go, Rust, and Java")
+
+    extraction = extract_revision_range_data(repo, base_ref="v1.0", target_ref="HEAD")
+    structural = run_structural_code_analysis(extraction)
+    by_sym = {sc.symbol_name: sc for sc in structural.symbol_changes}
+
+    for sym_name in ("compute_score", "StartServer", "parse_token", "execute"):
+        assert sym_name in by_sym, f"Missing multi-language symbol {sym_name}"
+        assert by_sym[sym_name].is_breaking_candidate is True
+

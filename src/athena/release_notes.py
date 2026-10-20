@@ -1,4 +1,4 @@
-"""Capability C & Pipeline Orchestrator: Release Notes, Git History Analysis, and Breaking-Change Reports."""
+"""Pipeline Orchestrator: Release Notes, Git History Analysis, and Breaking-Change Reports."""
 
 from __future__ import annotations
 
@@ -31,19 +31,19 @@ def run_git_history_analysis(
     repo_path: str | Path,
     base_ref: str = "AUTO",
     target_ref: str = "HEAD",
-    max_commits: int = 50,
+    max_commits: int = 100,
     use_llm: bool = DEFAULT_ENABLE_LLM,
     ollama_url: str = DEFAULT_OLLAMA_BASE_URL,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
     timeout_seconds: float = 90.0,
 ) -> GitHistoryAnalysisReport:
-    """Execute Capability A + B + D: Git history analysis, AST diffing, and evidence-backed story synthesis."""
+    """Execute Git history analysis, multi-language AST diffing, and evidence-backed story synthesis."""
     try:
         extraction = extract_revision_range_data(
             repo_path_input=repo_path,
             base_ref=base_ref,
             target_ref=target_ref,
-            max_commits=max(1, min(max_commits, 200)),
+            max_commits=max(1, min(max_commits, 500)),
         )
     except AthenaValidationError as exc:
         return GitHistoryAnalysisReport(
@@ -106,14 +106,15 @@ def run_breaking_change_detection(
     ollama_url: str = DEFAULT_OLLAMA_BASE_URL,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
     timeout_seconds: float = 90.0,
+    max_commits: int = 100,
 ) -> BreakingChangeReport:
-    """Execute Capability B + D: Detect potential breaking changes requiring human review with caller & doc blast radius."""
+    """Detect potential breaking changes requiring human review with caller & doc blast radius."""
     try:
         extraction = extract_revision_range_data(
             repo_path_input=repo_path,
             base_ref=base_ref,
             target_ref=target_ref,
-            max_commits=50,
+            max_commits=max(1, min(max_commits, 500)),
         )
     except AthenaValidationError as exc:
         return BreakingChangeReport(
@@ -235,8 +236,9 @@ def run_release_notes_generation(
     ollama_url: str = DEFAULT_OLLAMA_BASE_URL,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
     timeout_seconds: float = 90.0,
+    max_commits: int = 100,
 ) -> ReleaseNotesReport:
-    """Execute Capability C + D: Generate structured, audience-tailored release notes with optional safe Markdown save."""
+    """Generate structured, audience-tailored release notes with optional safe Markdown save."""
     audience_clean = (audience or "developers").strip().lower()
     if audience_clean not in VALID_AUDIENCES:
         return ReleaseNotesReport(
@@ -258,7 +260,7 @@ def run_release_notes_generation(
             repo_path_input=repo_path,
             base_ref=base_ref,
             target_ref=target_ref,
-            max_commits=50,
+            max_commits=max(1, min(max_commits, 500)),
         )
     except AthenaValidationError as exc:
         return ReleaseNotesReport(

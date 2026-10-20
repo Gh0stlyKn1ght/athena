@@ -1,4 +1,4 @@
-"""Capability A: Deterministic, Read-Only Git Repository Inspector & Diff Extractor."""
+"""Deterministic, Read-Only Git Repository Inspector & Diff Extractor."""
 
 from __future__ import annotations
 
@@ -542,7 +542,7 @@ def extract_revision_range_data(
     repo_path_input: str | Path,
     base_ref: str,
     target_ref: str = "HEAD",
-    max_commits: int = 50,
+    max_commits: int = 100,
 ) -> RawRangeExtraction:
     """Extract commits, file diffs, source blobs, and ground-truth EvidenceRecords between two revisions."""
     repo_path = validate_repo_path(repo_path_input)
@@ -620,10 +620,15 @@ def extract_revision_range_data(
         path_filter_args: list[str] = []
     else:
         # Prioritize AST/doc files first so the single batch git diff fetches all blobs needed for AST analysis
-        ast_exts = (".py", ".ts", ".tsx", ".js", ".jsx", ".md", ".rst")
+        ast_exts = (
+            ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+            ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
+            ".go", ".rs", ".java", ".kt", ".scala", ".cs", ".rb", ".php", ".swift",
+            ".md", ".rst",
+        )
         priority_paths = [p for p in prelim_paths if p.endswith(ast_exts)]
         other_paths = [p for p in prelim_paths if not p.endswith(ast_exts)]
-        path_filter_args = (priority_paths + other_paths)[:20]
+        path_filter_args = (priority_paths + other_paths)[:25]
 
     # Run spoof-proof unified diff (with 3 lines of context so hunks are human/LLM readable)
     if is_partial and not path_filter_args:
@@ -772,7 +777,12 @@ def extract_revision_range_data(
 
         # Read source blobs only for files supported by AST and doc-drift engines to eliminate subprocess storms
         can_load_ast_blob = (
-            file_path.endswith((".py", ".ts", ".tsx", ".js", ".jsx", ".md", ".rst"))
+            file_path.endswith((
+                ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+                ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
+                ".go", ".rs", ".java", ".kt", ".scala", ".cs", ".rb", ".php", ".swift",
+                ".md", ".rst",
+            ))
             and ast_blobs_loaded < max_ast_blob_files
             and (not is_partial or file_path in batched_partial_paths)
         )

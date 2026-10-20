@@ -4,13 +4,16 @@
 
 <br />
 
-# Athena (`athena-mcp`)
+# Athena (`athena-mcp`) — v1.1.0
 
 [![M8ven Score](https://m8ven.ai/badge/mcp/aaryanrwt-athena-bahjjw)](https://m8ven.ai/mcp/aaryanrwt-athena-bahjjw?s=readme)
 
-**Local-First, Evidence-Backed Git & AST Release-Readiness and Change-Intelligence MCP Server**
+**Local-First, Evidence-Backed Multi-Language Git & AST Release-Readiness and Change-Intelligence MCP Server**
 
-Athena is an open-source, local-first Model Context Protocol (MCP) server and developer CLI that delivers **verifiable, ground-truth code-change intelligence**. By combining deterministic Git diff analysis, Python Abstract Syntax Tree (`ast`) and TypeScript/JavaScript structural signature comparison, downstream caller blast-radius tracing, and documentation-drift detection, Athena eliminates the hallucination and superficiality of conventional AI release-note generators.
+- **Version**: `1.1.0`
+- **Owner & Maintainer**: **Aaryan Rawat** ([`aaryan28rwt@gmail.com`](mailto:aaryan28rwt@gmail.com))
+
+Athena is an open-source, local-first Model Context Protocol (MCP) server and developer CLI that delivers **verifiable, ground-truth code-change intelligence**. By combining deterministic Git diff analysis (`100+` commit range inspection), Python Abstract Syntax Tree (`ast`) and multi-language structural signature comparison (**TypeScript, JavaScript, Python, C++, C, Go, Rust, Java, Kotlin, Scala, C#, Ruby, PHP, Swift**), downstream caller blast-radius tracing, and documentation-drift detection, Athena eliminates the hallucination and superficiality of conventional release-note generators.
 
 <p align="center">
   <img src="assets/athena-brag.gif" alt="Athena in Action — AST & Git Change Intelligence Showcase" width="100%" />
@@ -18,19 +21,20 @@ Athena is an open-source, local-first Model Context Protocol (MCP) server and de
 
 ---
 
-## Key Differentiators
+## Key Differentiators (v1.1.0)
 
-1. **Deterministic-First Core (100% LLM-Independent)**: Athena works out-of-the box completely offline without Ollama, without an external AI API, and without any network connection. All Git inspections, AST symbol deltas, caller blast-radius graphs, doc-drift warnings, and release notes execute deterministically with 0ms LLM wait time.
-2. **Ground-Truth Evidence Citations**: Every reported change story and potential breaking change is bound to verified `EvidenceRecord` items containing the 40-character commit SHA, commit subject, file path, exact base/target line spans, unified diff hunk header/excerpt, and confidence rating.
-3. **AST Contract Differencing & Recursive Function Defect Analysis**: Athena ignores misleading Conventional Commit prefixes (e.g. `fix:` commit messages that actually introduce new public methods or break signatures). It analyzes parameter defaults, positional-parameter index shifts (`BUG-030`), `None`-fallback body guards (`griffe#469`), return-type annotations, `(str, Enum)` <-> `StrEnum` migrations (`griffe#501`), Enum members, public constants, newly raised exceptions (`griffe#498`), and **recursive function bugs** (broken recursive self-call arity, unconditional infinite recursion without a base case, unqualified class-method self-recursion `NameError`s, and self-recursive caller blast radius).
-4. **Public API Exposure Differentiation**: Automatically distinguishes symbols exported via `__all__`, package `__init__.py` re-exports, or TypeScript `export` declarations (`is_public_api_export=True`) from internal `_private` helper modules (`is_public_api_export=False`) so teams know when external package consumers are at risk even if internal callers look clean.
-5. **Unresolved Dynamic Dispatch Detection & Coverage Confidence Score**: Scans repository ASTs for reflection and dynamic invocation patterns (`getattr`, `hasattr`, `setattr`, `globals()`, `locals()`, `eval`, `exec`, `importlib.import_module`, and TypeScript bracket dispatch `obj[key]()`) and emits an explicit `AnalysisCoverageReport` (`static_parse_coverage_pct`, `unresolved_dynamic_calls_count`, `overall_blast_radius_confidence`) so CI and PR reviewers never get a false sense of security.
-6. **Three Resilient Operating Modes (Supporting `gemma:latest` / Gemma 7B & `qwen2.5-coder:7b`)**:
+1. **Deterministic-First Core (100% LLM-Independent)**: Athena works out-of-the-box completely offline without Ollama, without an external API, and without any network connection. All Git inspections, AST symbol deltas, caller blast-radius graphs, doc-drift warnings, and release notes execute deterministically with 0ms LLM wait time.
+2. **Multi-Language Structural & AST Diffing (New in v1.1.0)**: Full Python `ast` contract and recursion analysis plus structural symbol & signature comparison across **TypeScript, JavaScript, C++, C, Go, Rust, Java, Kotlin, Scala, C#, Ruby, PHP, and Swift** — detecting removed public symbols, parameter additions/removals, visibility narrowing, and return-type mutations across 100+ commit histories.
+3. **Ground-Truth Evidence Citations**: Every reported change story and potential breaking change is bound to verified `EvidenceRecord` items containing the 40-character commit SHA, commit subject, file path, exact base/target line spans, unified diff hunk header/excerpt, and confidence rating.
+4. **AST Contract Differencing & Recursive Function Defect Analysis**: Athena ignores misleading Conventional Commit prefixes (e.g. `fix:` commit messages that actually introduce new public methods or break signatures). It analyzes parameter defaults, positional-parameter index shifts (`BUG-030`), `None`-fallback body guards (`griffe#469`), return-type annotations, `(str, Enum)` <-> `StrEnum` migrations (`griffe#501`), Enum members, public constants, newly raised exceptions (`griffe#498`), and **recursive function bugs** (broken recursive self-call arity, unconditional infinite recursion without a base case, unqualified class-method self-recursion `NameError`s, and self-recursive caller blast radius).
+5. **Public API Exposure Differentiation**: Automatically distinguishes symbols exported via `__all__`, package `__init__.py` re-exports, TypeScript `export` declarations, Go exported identifiers, Rust `pub` items, and Java/C#/C++ `public` symbols (`is_public_api_export=True`) from internal/private helpers (`is_public_api_export=False`) so teams know when external package consumers are at risk even if internal callers look clean.
+6. **Unresolved Dynamic Dispatch Detection & Coverage Confidence Score**: Scans repository ASTs for reflection and dynamic invocation patterns (`getattr`, `hasattr`, `setattr`, `globals()`, `locals()`, `eval`, `exec`, `importlib.import_module`, and TypeScript bracket dispatch `obj[key]()`) and emits an explicit `AnalysisCoverageReport` (`static_parse_coverage_pct`, `unresolved_dynamic_calls_count`, `overall_blast_radius_confidence`) so CI and PR reviewers never get a false sense of security.
+7. **Three Resilient Operating Modes (Supporting `gemma:latest` / Gemma 7B & `qwen2.5-coder:7b`)**:
    - **Mode A (Deterministic-only, Default)**: High-speed, 100% offline rule-based engine.
-   - **Mode B (Optional Local AI Enhancement)**: When requested (`--llm`, `use_llm=True`, or `ATHENA_ENABLE_LLM=1`), local Ollama (`gemma:latest` / `gemma:7b` or `qwen2.5-coder:7b`) enhances narrative explanations while strictly verifying evidence citations against deterministic ground truth. Includes automatic VRAM swap eviction for 6 GB GPUs.
+   - **Mode B (Optional Local Ollama Enhancement)**: When requested (`--llm`, `use_llm=True`, or `ATHENA_ENABLE_LLM=1`), local Ollama (`gemma:latest` / `gemma:7b` or `qwen2.5-coder:7b`) enhances narrative explanations while strictly verifying evidence citations against deterministic ground truth. Includes automatic VRAM swap eviction for 6 GB GPUs.
    - **Mode C (Fault-Tolerant Fallback)**: If Ollama times out, returns malformed JSON, or is offline, Athena gracefully degrades to deterministic output with clear diagnostic warnings.
-7. **Drop-In GitHub Actions PR Audit Bot (`.github/workflows/athena-audit.yml`)**: Ships with a ready-to-use GitHub Actions workflow that runs the multi-Python test matrix and posts a structured Breaking-Change, Blast-Radius & Release Notes summary table directly to `$GITHUB_STEP_SUMMARY` on every Pull Request.
-8. **Private & Read-Only**: Athena never modifies your repository, never pushes code, and runs 100% locally on consumer hardware (verified on an NVIDIA RTX 4050 Laptop GPU with 6 GB VRAM and 16 GB RAM).
+8. **Drop-In GitHub Actions PR Audit Bot (`.github/workflows/athena-audit.yml`)**: Ships with a ready-to-use GitHub Actions workflow that runs the multi-Python test matrix and posts a structured Breaking-Change, Blast-Radius & Release Notes summary table directly to `$GITHUB_STEP_SUMMARY` on every Pull Request.
+9. **Private, Read-Only & Fully Annotated MCP Tools**: Athena declares explicit MCP `ToolAnnotations` (`readOnlyHint=True`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`) on all 7 registered tools, never modifies your repository, never pushes code, and runs 100% locally on consumer hardware (verified on an NVIDIA RTX 4050 Laptop GPU with 6 GB VRAM and 16 GB RAM).
 
 ---
 
@@ -39,24 +43,24 @@ Athena is an open-source, local-first Model Context Protocol (MCP) server and de
 ```mermaid
 flowchart TD
     subgraph Client["MCP Clients & CLI"]
-        CLI["Athena CLI\n(athena / python -m athena.cli)"]
+        CLI["Athena CLI v1.1.0\n(athena / python -m athena.cli)"]
         IDE["MCP Clients\n(Claude Desktop, Cursor, VS Code)"]
     end
 
     subgraph Server["Athena MCP Server (stdio)"]
-        MCP["athena.mcp_server\n(Tools & Schema Validation)"]
+        MCP["athena.mcp_server\n(7 Read-Only Annotated Tools & Schema Validation)"]
         SEC["Security & Redaction Gate\n- Path Jail & Symlink Defense\n- CLI Flag Injection Defense\n- Bearer / Key Redaction"]
     end
 
     subgraph Pipeline["Athena Deterministic Analysis Pipeline (Mode A)"]
-        GIT["Git Inspector\n(Bounded Diff, Partial Clone Batching, Commits)"]
-        AST["AST & Structural Analyzer\n- Python ast Contract & Recursion Differ\n- TypeScript/JS Structural Scanner\n- Public API & None-Guard Analysis"]
+        GIT["Git Inspector\n(100+ Commit Range, Partial Clone Batching, Diffs)"]
+        AST["Multi-Language AST & Structural Analyzer\n- Python ast Contract & Recursion Differ\n- TS/JS/C++/C/Go/Rust/Java/C#/Ruby/PHP Scanner\n- Public API & None-Guard Analysis"]
         BLAST["Blast-Radius & Caller Engine\n(Self-Recursion, Static Import, Arity & Dynamic Call Tracing)"]
         DRIFT["Doc-Drift Scanner\n(Markdown Stale Symbol & Call-Arity Extraction)"]
         VERIFY["Evidence & Coverage Verifier\n(SHA, Line Span, Parse Coverage & Confidence)"]
     end
 
-    subgraph OptionalAI["Optional Local AI Enhancement (Mode B / Mode C)"]
+    subgraph OptionalAI["Optional Local LLM Enhancement (Mode B / Mode C)"]
         OLLAMA["Local Ollama Service\n(gemma:latest 7B / qwen2.5-coder:7b)"]
         FALLBACK["Graceful Degrader\n(Timeout / Malformed JSON / Offline)"]
     end
@@ -140,7 +144,7 @@ Add Athena to your Claude Desktop configuration file:
 }
 ```
 
-*Note*: To enable optional local Ollama enhancement, set `"ATHENA_ENABLE_LLM": "1"`.
+*Note*: To enable optional local Ollama enhancement (`gemma:latest` or `qwen2.5-coder:7b`), set `"ATHENA_ENABLE_LLM": "1"`.
 
 ### Cursor / VS Code / Other MCP Clients
 
@@ -159,14 +163,17 @@ For generic MCP clients using executable commands:
 
 ## Registered MCP Tools
 
-Athena exposes 4 read-only, schema-validated MCP tools:
+Athena exposes **7 read-only, schema-validated MCP tools**, each annotated with explicit MCP `ToolAnnotations` (`readOnlyHint=True`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`):
 
 | MCP Tool Name | Primary Parameters | Description |
 | :--- | :--- | :--- |
 | `inspect_repository` | `repo_path` (str), `max_recent_commits` (int, default 10) | Safely inspects branch status, tags, HEAD commit, clean status, and recent commits. |
-| `analyze_git_history` | `repo_path` (str), `base_ref` (str, default "AUTO"), `target_ref` (str, default "HEAD"), `max_commits` (int, default 50), `use_llm` (bool, default False) | Extracts bounded revision range, commit history, unified diffs, and AST symbol deltas into grounded change stories. |
+| `analyze_git_history` | `repo_path` (str), `base_ref` (str, default "AUTO"), `target_ref` (str, default "HEAD"), `max_commits` (int, default 100, up to 500), `use_llm` (bool, default False) | Extracts bounded revision range (`100+` commits), commit history, unified diffs, and multi-language AST/structural symbol deltas into grounded change stories. |
 | `detect_potential_breaking_changes` | `repo_path` (str), `base_ref` (str, default "AUTO"), `target_ref` (str, default "HEAD"), `include_low_confidence` (bool, default False), `use_llm` (bool, default False) | Detects signature mutations, removed symbols, newly raised exceptions, base class changes, affected downstream callers, and documentation drift. |
 | `generate_release_notes` | `repo_path` (str), `base_ref` (str, default "AUTO"), `target_ref` (str, default "HEAD"), `release_version` (str, default "Unreleased"), `audience` (str: `end_users` \| `developers` \| `maintainers` \| `clients`), `output_file` (str, optional), `overwrite` (bool, default False), `use_llm` (bool, default False) | Synthesizes audience-tailored Markdown release notes with evidence citations, upgrade considerations, and potential breaking changes. |
+| `analyze_change_graph` | `repo_path` (str), `base_ref` (str), `head_ref` (str, default "HEAD"), `max_commits` (int, default 100) | Inspects deterministic symbol delta graph, caller blast radius, and commit history across `base_ref..head_ref`. |
+| `verify_breaking_and_doc_drift` | `repo_path` (str), `base_ref` (str), `head_ref` (str, default "HEAD"), `include_low_confidence` (bool, default False) | Verifies breaking changes, documentation drift, and caller impact across `base_ref..head_ref`. |
+| `generate_verified_release_brief` | `repo_path` (str), `base_ref` (str), `head_ref` (str, default "HEAD"), `release_version` (str), `audience` (str) | Generates structured Markdown + JSON release brief backed by verified commit and diff evidence. |
 
 ---
 
@@ -425,55 +432,59 @@ Verified Terminal Output (Actual Markdown Rendered):
 
 ---
 
-## Public Repository Evaluation & Benchmark Results
+## Public Repository Evaluation & Benchmark Results (v1.1.0)
 
-Athena includes an automated, reproducible evaluation harness (`tests/evaluation/run_evaluation.py`) cataloging **176 public repositories** across technology leaders (Meta, Microsoft, Hugging Face, Vercel, Google, Ollama, Apple, NVIDIA, AWS), financial institutions (Goldman Sachs, FINOS), and top open-source ecosystems totaling **5,367,030 (`5,000k+`) cumulative GitHub stars** (including **101 repositories with `>= 10,000+` stars** and active daily maintainers).
+Athena includes an automated, reproducible evaluation harness (`tests/evaluation/run_evaluation.py`). Across its v1.0 and v1.1 evaluation suites, Athena has cloned and executed its full MCP tool suite against **140+ distinct actively maintained open-source repositories** across **11 programming languages**.
 
-### Multi-Commit (50+ Commits) & Full MCP Tool Suite Validation
+### v1.1.0 Multi-Language 100+ Commit & Dual-Model (`gemma:latest` + `qwen2.5-coder:7b`) Evaluation
 
-Following the resolution of single-commit and partial-clone evaluation defects ([BUG-001](tests/evaluation/results/BUG_REPORTS.md#bug-001-evaluation-harness-evaluates-exactly-1-commit-rather-than-specified-multi-commit-range), [BUG-028](tests/evaluation/results/BUG_REPORTS.md), [BUG-029](tests/evaluation/results/BUG_REPORTS.md)), Athena's evaluation harness enforces deep historical reachability and full 4-tool MCP verification:
-1. Clones repositories into `tests/evaluation/cache` with depth >= 75 (`--clone-depth 75`, `--filter=blob:none`).
-2. Verifies commit reachability with `git rev-list --count HEAD` and selects `HEAD~50..HEAD`.
-3. Runs all 4 MCP server tools (`inspect_repository`, `analyze_git_history`, `detect_potential_breaking_changes`, and `generate_release_notes`), plus Python recursive function AST scanning and live local Ollama `gemma:latest` (Gemma 7B) / `qwen2.5-coder:7b` synthesis.
+For **v1.1.0**, Athena cloned and evaluated **55 brand-new, actively maintained repositories (`>= 10,000+` GitHub stars each)** spanning **11 languages** (`TypeScript`, `JavaScript`, `Python`, `C++`, `C`, `Go`, `Rust`, `Java`, `C#`, `Ruby`, `PHP`) defined in [`tests/evaluation/v1_1_multilang_manifest.json`](tests/evaluation/v1_1_multilang_manifest.json):
+1. Cloned each repository into `tests/evaluation/cache` at depth `125` (`--clone-depth 125`, `--filter=blob:none`).
+2. Verified reachability of at least **100 historical commits (`HEAD~100..HEAD`)** per repository.
+3. Executed Athena's MCP server tools (`inspect_repository`, `analyze_git_history`, `detect_potential_breaking_changes`, and `generate_release_notes`), multi-language AST/structural signature diffing, and local Ollama `gemma:latest` + `qwen2.5-coder:7b` synthesis.
 
-#### Summary Metrics Across 85 Cloned & Evaluated Repositories (`4,398,500+` Passed Stars)
+#### v1.1.0 Summary Metrics Across 55 Multi-Language Repositories (100+ Commits Each)
 
-- **Manifest Corpus**: `176` repositories (`5,367,030` = **5,367k+ cumulative GitHub stars**, `101` with `>= 10,000` stars)
-- **Total Repositories Cloned & Evaluated via MCP**: `85` (`82` with `>= 10,000+` GitHub stars)
-- **Passed Deep-History (50+ Commits) & 4/4 MCP Tool Suite Evaluation**: **`81 / 85` (`95.3%` overall; `98.8%` of reachable 50+ commit repos)**
-- **Cumulative GitHub Stars of Passed Repositories**: **`4,398,500` stars**
-- **Total Commits Inspected Across Corpus**: **`4,050` commits**
-- **Total Diff Hunks Processed**: **`13,817` diff hunks**
-- **Total Recursive Python Functions Analyzed**: **`44` recursive functions**
+- **Manifest Corpus (`v1_1_multilang_manifest.json`)**: `55` actively maintained repositories (`1,558,900` cumulative GitHub stars; **55 / 55 with `>= 10,000+` stars**)
+- **Languages Evaluated**: `TypeScript`, `JavaScript`, `Python`, `C++`, `C`, `Go`, `Rust`, `Java`, `C#`, `Ruby`, `PHP`
+- **Repositories with `>= 100` Commits Inspected**: **`55 / 55` (`100.0%`)**
+- **Passed Deep-History (`100` Commits) & 4/4 MCP Tool Suite Evaluation**: **`55 / 55` (`100.0%` pass rate)**
+- **Total Commits Inspected Across v1.1.0 Corpus**: **`5,500` commits**
+- **Total Diff Hunks Processed**: **`5,319` diff hunks**
+- **Average Duration per Repository (100 Commits)**: **`42.36s`**
 
-#### Representative Sample from the 81 Passed Repositories
+#### Representative Multi-Language Sample from the 55 Passed v1.1.0 Repositories (`HEAD~100..HEAD`)
 
-| Organization / Repository | Primary Language | Stars | Range Commits | Inspected Commits | Files Changed | Diff Hunks | Structural Files | Rec Fns | Potential Breaks | MCP Tools | Duration |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`facebook/react`** | JavaScript | 230,000 | 50 | 50 | 403 | 51 | 299 | 0 | 0 | 4/4 OK | 90.06s |
-| **`microsoft/vscode`** | TypeScript | 165,000 | 50 | 50 | 245 | 45 | 226 | 0 | 32 | 4/4 OK | 26.75s |
-| **`huggingface/transformers`** | Python | 133,000 | 50 | 50 | 295 | 22 | 254 | 2 | 0 | 4/4 OK | 38.81s |
-| **`vercel/next.js`** | JavaScript | 126,000 | 50 | 50 | 476 | 48 | 377 | 0 | 5 | 4/4 OK | 41.35s |
-| **`golang/go`** | Go | 124,000 | 50 | 50 | 148 | 117 | 0 | 0 | 0 | 4/4 OK (`ollama:gemma:latest`) | 62.43s |
-| **`ollama/ollama`** | Go | 115,000 | 119 | 50 | 206 | 60 | 4 | 0 | 3 | 4/4 OK | 65.96s |
-| **`nodejs/node`** | JavaScript | 108,000 | 50 | 50 | 1,741 | 32 | 472 | 0 | 0 | 4/4 OK | 21.55s |
-| **`pytorch/pytorch`** | Python | 86,000 | 50 | 50 | 147 | 59 | 95 | 0 | 149 | 4/4 OK | 20.98s |
-| **`django/django`** | Python | 80,000 | 50 | 50 | 90 | 42 | 48 | 5 | 0 | 4/4 OK | 86.32s |
-| **`tiangolo/fastapi`** | Python | 78,000 | 50 | 50 | 57 | 50 | 14 | 2 | 0 | 4/4 OK | 69.82s |
-| **`pallets/flask`** | Python | 68,000 | 120 | 50 | 81 | 258 | 30 | 0 | 30 | 4/4 OK | 75.12s |
-| **`ansible/ansible`** | Python | 62,000 | 50 | 50 | 414 | 62 | 146 | 3 | 2 | 4/4 OK | 79.95s |
-| **`scikit-learn/scikit-learn`** | Python | 59,000 | 50 | 50 | 327 | 50 | 235 | 0 | 9 | 4/4 OK | 108.24s |
-| **`psf/requests`** | Python | 52,000 | 50 | 50 | 34 | 88 | 15 | 0 | 2 | 4/4 OK | 34.12s |
-| **`pandas-dev/pandas`** | Python | 43,000 | 50 | 50 | 122 | 53 | 98 | 2 | 0 | 4/4 OK | 120.56s |
-| **`vllm-project/vllm`** | Python | 38,000 | 50 | 50 | 354 | 78 | 121 | 0 | 107 | 4/4 OK | 20.81s |
-| **`google/jax`** | Python | 31,000 | 59 | 50 | 98 | 113 | 73 | 5 | 5 | 4/4 OK | 164.50s |
-| **`celery/celery`** | Python | 24,500 | 50 | 50 | 87 | 86 | 62 | 3 | 2 | 4/4 OK | 81.88s |
-| **`pallets/click`** | Python | 15,600 | 244 | 50 | 93 | 391 | 58 | 1 | 61 | 4/4 OK | 73.21s |
-| **`encode/httpx`** | Python | 13,500 | 50 | 50 | 49 | 156 | 30 | 1 | 48 | 4/4 OK | 64.10s |
-| **`goldmansachs/gs-quant`** | Python | 2,900 | 50 | 50 | 502 | 1,798 | 314 | 5 | 143 | 4/4 OK | 193.14s |
-| **`NVIDIA/cuda-python`** | Python | 1,400 | 50 | 50 | 436 | 1,113 | 178 | 0 | 61 | 4/4 OK | 132.84s |
+| Repository | Language | Stars | Range Tested | Total Commits | Inspected Commits | Diffs | Files Changed | Structural Files | AST Symbols | Potential Breaks | MCP Tools | Engine / Model | Duration |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`sveltejs/svelte`** | JavaScript | 80,500 | `f2648b35..40bb0848` | 100 | 100 | 25 | 381 | 220 | 0 | 0 | 4/4 OK | `deterministic_engine` | 64.19s |
+| **`gin-gonic/gin`** | Go | 79,500 | `58135f06..0f09c3a9` | 100 | 100 | 161 | 59 | 43 | 66 | 4 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 50.02s |
+| **`ocornut/imgui`** | C++ | 62,000 | `ed8ed8bb..4be0b47e` | 100 | 100 | 56 | 48 | 37 | 1 | 0 | 4/4 OK | `deterministic_engine` | 27.69s |
+| **`scrapy/scrapy`** | Python | 53,500 | `eb744fe9..e1111a0f` | 100 | 100 | 119 | 246 | 209 | 1 | 0 | 4/4 OK | `deterministic_engine` | 41.24s |
+| **`sharkdp/bat`** | Rust | 50,500 | `f1137453..f748c1a4` | 292 | 100 | 108 | 87 | 28 | 13 | 0 | 4/4 OK | `deterministic_engine` | 23.05s |
+| **`BurntSushi/ripgrep`** | Rust | 50,000 | `5748f81b..3fce3b5b` | 100 | 100 | 113 | 69 | 40 | 19 | 1 | 4/4 OK | `deterministic_engine` | 19.55s |
+| **`jekyll/jekyll`** | Ruby | 49,500 | `0f03b31b..97c3bdc8` | 100 | 100 | 35 | 82 | 26 | 0 | 1 | 4/4 OK | `deterministic_engine` | 22.95s |
+| **`pmndrs/zustand`** | TypeScript | 49,000 | `a124d59c..d7a5583c` | 100 | 100 | 33 | 75 | 15 | 0 | 0 | 4/4 OK | `deterministic_engine` | 20.20s |
+| **`ReactiveX/RxJava`** | Java | 48,000 | `c027d005..ee4a29e1` | 104 | 100 | 82 | 205 | 183 | 25 | 0 | 4/4 OK | `deterministic_engine` | 49.48s |
+| **`nlohmann/json`** | C++ | 43,500 | `0c446267..4da932f5` | 100 | 100 | 60 | 311 | 141 | 0 | 0 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 66.15s |
+| **`spf13/cobra`** | Go | 38,500 | `66b215ba..adbc8813` | 105 | 100 | 174 | 40 | 23 | 61 | 10 | 4/4 OK | `deterministic_engine` | 16.17s |
+| **`trpc/trpc`** | TypeScript | 35,500 | `cdbc2804..1c9bf51e` | 100 | 100 | 30 | 479 | 367 | 6 | 0 | 4/4 OK | `deterministic_engine` | 45.98s |
+| **`google/googletest`** | C++ | 35,000 | `a35bc769..b66cffcd` | 123 | 100 | 118 | 75 | 55 | 10 | 1 | 4/4 OK | `deterministic_engine` | 19.85s |
+| **`gofiber/fiber`** | Go | 34,500 | `eb6e578f..4c6841b3` | 422 | 100 | 97 | 232 | 148 | 46 | 5 | 4/4 OK | `deterministic_engine` | 39.23s |
+| **`nothings/stb`** | C | 27,500 | `7a69424f..a7d4c217` | 347 | 100 | 107 | 76 | 47 | 247 | 60 | 4/4 OK | `deterministic_engine` | 74.78s |
+| **`tokio-rs/tokio`** | Rust | 27,500 | `decfd115..ce685ee6` | 270 | 100 | 59 | 268 | 248 | 32 | 0 | 4/4 OK | `deterministic_engine` | 46.57s |
+| **`rollup/rollup`** | JavaScript | 25,500 | `4b6bc39e..e70c19b9` | 100 | 100 | 41 | 445 | 353 | 2 | 1 | 4/4 OK | `ollama:gemma:latest` | 89.16s |
+| **`gabime/spdlog`** | C++ | 25,000 | `6fa36017..76d45805` | 100 | 100 | 85 | 151 | 137 | 11 | 5 | 4/4 OK | `deterministic_engine` | 16.01s |
+| **`libuv/libuv`** | C | 24,500 | `972e78f9..bbd08cc8` | 100 | 100 | 55 | 111 | 87 | 2 | 0 | 4/4 OK | `deterministic_engine` | 23.03s |
+| **`guzzle/guzzle`** | PHP | 23,300 | `7e93caca..b920e5fc` | 167 | 100 | 193 | 105 | 86 | 0 | 0 | 4/4 OK | `deterministic_engine` | 24.70s |
+| **`fmtlib/fmt`** | C++ | 21,000 | `0cf9f5c9..0fc31633` | 100 | 100 | 120 | 53 | 35 | 159 | 78 | 4/4 OK | `deterministic_engine` | 41.28s |
+| **`DapperLib/Dapper`** | C# | 17,800 | `02c92d99..eb47546a` | 102 | 100 | 101 | 166 | 109 | 23 | 6 | 4/4 OK | `deterministic_engine` | 23.19s |
+| **`pytest-dev/pytest`** | Python | 12,200 | `a3a62a0e..49ea4d08` | 222 | 100 | 25 | 174 | 87 | 0 | 0 | 4/4 OK | `ollama:gemma:latest` | 43.06s |
+| **`DaveGamble/cJSON`** | C | 11,200 | `98ecc024..6d9f2443` | 133 | 100 | 143 | 31 | 15 | 1 | 0 | 4/4 OK | `ollama:qwen2.5-coder:7b` | 41.82s |
+| **`lz4/lz4`** | C | 10,600 | `9da37b2e..1deef0b7` | 272 | 100 | 202 | 70 | 31 | 31 | 6 | 4/4 OK | `deterministic_engine` | 20.43s |
+| **`serde-rs/serde`** | Rust | 10,100 | `e3eaa6a3..0db9b3b5` | 208 | 100 | 112 | 103 | 68 | 38 | 9 | 4/4 OK | `deterministic_engine` | 30.72s |
 
-*Complete 85-repository table is preserved in [`tests/evaluation/results/EVALUATION_REPORT.md`](tests/evaluation/results/EVALUATION_REPORT.md) and machine-readable data in [`tests/evaluation/results/evaluation_results.json`](tests/evaluation/results/evaluation_results.json).*
+*Complete 55-repository v1.1.0 report is preserved in [`tests/evaluation/results/EVALUATION_REPORT.md`](tests/evaluation/results/EVALUATION_REPORT.md) and machine-readable data in [`tests/evaluation/results/evaluation_results.json`](tests/evaluation/results/evaluation_results.json). Additionally, Athena's initial 85-repository 50-commit evaluation (`4,398,500+` cumulative stars across `facebook/react`, `microsoft/vscode`, `huggingface/transformers`, `vercel/next.js`, `golang/go`, `ollama/ollama`, `nodejs/node`, `pytorch/pytorch`, `django/django`, `tiangolo/fastapi`, etc.) achieved a 98.8% pass rate on reachable 50+ commit histories.*
 
 ---
 
@@ -507,10 +518,9 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ---
 
-### Formal Defect Reports & Research Audit
+### Engineering Defect Reports
 
-- **Bug Reports (BUG-001 through BUG-029)**: Full root-cause analysis and resolution records for **29 isolated engineering defects** (including evaluation depth, Windows process tree termination, packfile permission locks, metric conflation, unguarded parameter fallbacks, SemVer `+` build metadata, NTFS Alternate Data Stream injection, Windows reserved device names, positional-only parameter markers, `@staticmethod` argument preservation, `@property` getter/setter coexistence, TypeScript generic functions, aliased imports, `.gitconfig` `diff.noprefix` spoofing immunity, historical Git blob caller lookup, Markdown call-arity drift in modified docs, `StrEnum` migration & Enum member diffing, body-only function mutation test-gap tracking, pre-filter coverage calculation on multi-language repos, self-recursive caller blindspot & broken recursive arity (`BUG-021`), unconditional infinite recursion & unqualified method self-calls (`BUG-022`), deep AST `RecursionError` hardening (`BUG-023`), multi-class method short-name collision (`BUG-024`), local Ollama `gemma:latest` 7B VRAM swap eviction & JSON normalization (`BUG-025`), MCP tool error boundaries & `bool`-as-`int` validation (`BUG-026`), `pytest` cache recursion isolation (`BUG-027`), partial-clone `--numstat` / `-M` lazy network fetch timeouts (`BUG-028`), and redundant `HEAD` blob subprocess storms (`BUG-029`)) are cataloged in [`tests/evaluation/results/BUG_REPORTS.md`](tests/evaluation/results/BUG_REPORTS.md).
-- **Implementation & Research Audit Matrix**: Full traceability from the research specification to implemented capabilities is available in [`tests/evaluation/results/IMPLEMENTATION_AUDIT.md`](tests/evaluation/results/IMPLEMENTATION_AUDIT.md).
+- **Bug Reports (BUG-001 through BUG-030)**: Full root-cause analysis and resolution records for **30 isolated engineering defects** (including evaluation depth, Windows process tree termination, packfile permission locks, metric conflation, unguarded parameter fallbacks, SemVer `+` build metadata, NTFS Alternate Data Stream injection, Windows reserved device names, positional-only parameter markers, `@staticmethod` argument preservation, `@property` getter/setter coexistence, TypeScript generic functions, aliased imports, `.gitconfig` `diff.noprefix` spoofing immunity, historical Git blob caller lookup, Markdown call-arity drift in modified docs, `StrEnum` migration & Enum member diffing, body-only function mutation test-gap tracking, pre-filter coverage calculation on multi-language repos, self-recursive caller blindspot & broken recursive arity (`BUG-021`), unconditional infinite recursion & unqualified method self-calls (`BUG-022`), deep AST `RecursionError` hardening (`BUG-023`), multi-class method short-name collision (`BUG-024`), local Ollama `gemma:latest` 7B VRAM swap eviction & JSON normalization (`BUG-025`), MCP tool error boundaries & `bool`-as-`int` validation (`BUG-026`), `pytest` cache recursion isolation (`BUG-027`), partial-clone `--numstat` / `-M` lazy network fetch timeouts (`BUG-028`), redundant `HEAD` blob subprocess storms (`BUG-029`), and optional parameter insertion before positional parameters (`BUG-030`)) are cataloged in [`tests/evaluation/results/BUG_REPORTS.md`](tests/evaluation/results/BUG_REPORTS.md).
 
 ---
 
@@ -527,7 +537,7 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ## Current Scope & Limitations
 
-- **Language AST Support**: Complete AST contract and recursion defect analysis (parameter defaults, body guards, return types, exception raises, base classes, Enum members, public constants, recursive self-call arity, and infinite recursion base-case detection) is implemented for **Python**. **TypeScript/JavaScript** uses structural symbol, generic, enum, and export scanning. Other languages (C++, Java, Go, Rust) use unified diff heuristics and commit metadata.
+- **Language AST & Structural Support**: Full AST contract and recursion defect analysis (parameter defaults, body guards, return types, exception raises, base classes, Enum members, public constants, recursive self-call arity, and infinite recursion base-case detection) is implemented for **Python**. Multi-language structural symbol, signature, parameter arity, visibility, and export diffing is supported for **TypeScript, JavaScript, C++, C, Go, Rust, Java, Kotlin, Scala, C#, Ruby, PHP, and Swift**.
 - **Inter-file Caller Resolution & Dynamic Dispatch**: Static caller analysis resolves callers across local modules within the same repository using import hierarchy tracking (including aliased imports and self-recursive calls) and verifies call-site argument arity. When reflection (`getattr`), dynamic imports (`importlib.import_module`), or bracket dispatch (`handlers[action]()`) are present, Athena explicitly flags them in `unresolved_dynamic_calls` and adjusts `analysis_coverage.overall_blast_radius_confidence` so reviewers know the exact boundary of static analysis.
 - **Read-Only Operation**: Athena does not write tags, create branches, or commit code to external repositories.
 
@@ -535,22 +545,29 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ## Running the Automated Test Suite
 
-Athena features a comprehensive automated test suite covering all functional capabilities, security boundaries, MCP stdio protocol roundtrips, recursive function edge cases, and live `gemma:latest` (Gemma 7B) & `qwen2.5-coder:7b` integration (**49 tests**):
+Athena features a comprehensive automated test suite covering all functional capabilities, multi-language structural diffing, security boundaries, MCP stdio protocol roundtrips, recursive function edge cases, and live `gemma:latest` (Gemma 7B) & `qwen2.5-coder:7b` integration (**117 tests**):
 
 ```bash
-# Run complete test suite (test_athena_mvp.py, test_mcp_protocol.py, test_real_world_edge_cases.py)
+# Run complete test suite (117 tests across unit, protocol, and real-world edge cases)
 python -m pytest -v
 
 # Run 19-scenario ground-truth semantic quality & Gemma 7B / Qwen 7B benchmark
 python tests/evaluation/run_quality_benchmark.py
 
-# Run large-scale multi-commit & MCP repository evaluation
-python tests/evaluation/run_evaluation.py --sort-by-stars --limit 85 --llm --model gemma:7b
+# Run v1.1.0 multi-language 100+ commit & MCP repository evaluation (55 repos, 10k+ stars)
+python tests/evaluation/run_evaluation.py --manifest tests/evaluation/v1_1_multilang_manifest.json --limit 55 --clone-depth 125 --target-commits 100 --llm --model dual
 ```
+
+---
+
+## Owner & Maintainer
+
+- **Name**: Aaryan Rawat
+- **Email**: [`aaryan28rwt@gmail.com`](mailto:aaryan28rwt@gmail.com)
+- **GitHub**: [@aaryanrwt](https://github.com/aaryanrwt)
 
 ---
 
 ## License
 
 Athena is licensed under the [Apache License, Version 2.0](LICENSE).
-

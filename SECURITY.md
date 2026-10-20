@@ -6,6 +6,7 @@ The following versions of **Athena (`athena-mcp`)** are currently supported with
 
 | Version | Supported          |
 | ------- | ------------------ |
+| `1.1.x` | :white_check_mark: |
 | `1.0.x` | :white_check_mark: |
 | `< 1.0` | :x:                |
 
@@ -27,7 +28,7 @@ Athena is designed from the ground up as a **read-only, local-first** MCP server
 If you discover a security vulnerability in Athena (for example: path traversal, Git argument injection, symlink escape, or credential redaction bypass):
 
 1. **Please do NOT open a public GitHub issue** for exploitable security vulnerabilities.
-2. Report the vulnerability privately via **[GitHub Private Vulnerability Reporting](https://github.com/aaryanrwt/athena/security/advisories/new)** on this repository.
+2. Report the vulnerability privately via **[GitHub Private Vulnerability Reporting](https://github.com/aaryanrwt/athena/security/advisories/new)** or directly to the project owner & maintainer (**Aaryan Rawat** — `aaryan28rwt@gmail.com`).
 3. Include:
    - Affected file(s) and commit SHA (`git rev-parse HEAD`).
    - A minimal proof-of-concept reproduction.

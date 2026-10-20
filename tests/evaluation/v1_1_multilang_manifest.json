@@ -1,0 +1,442 @@
+[
+  {
+    "owner_repo": "colinhacks/zod",
+    "url": "https://github.com/colinhacks/zod",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 35000,
+    "license": "MIT",
+    "selection_reason": "TypeScript-first schema validation with static type inference (>35k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "rollup/rollup",
+    "url": "https://github.com/rollup/rollup",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 25500,
+    "license": "MIT",
+    "selection_reason": "Next-generation ES module bundler (>25k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "pytest-dev/pytest",
+    "url": "https://github.com/pytest-dev/pytest",
+    "primary_language": "Python",
+    "stars_at_collection": 12200,
+    "license": "MIT",
+    "selection_reason": "Standard Python testing framework (>12k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "nlohmann/json",
+    "url": "https://github.com/nlohmann/json",
+    "primary_language": "C++",
+    "stars_at_collection": 43500,
+    "license": "MIT",
+    "selection_reason": "JSON for Modern C++ (>43k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "DaveGamble/cJSON",
+    "url": "https://github.com/DaveGamble/cJSON",
+    "primary_language": "C",
+    "stars_at_collection": 11200,
+    "license": "MIT",
+    "selection_reason": "Ultralightweight JSON parser in ANSI C (>11k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "gin-gonic/gin",
+    "url": "https://github.com/gin-gonic/gin",
+    "primary_language": "Go",
+    "stars_at_collection": 79500,
+    "license": "MIT",
+    "selection_reason": "HTTP web framework written in Go (>79k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "tokio-rs/tokio",
+    "url": "https://github.com/tokio-rs/tokio",
+    "primary_language": "Rust",
+    "stars_at_collection": 27500,
+    "license": "MIT",
+    "selection_reason": "Runtime for writing reliable asynchronous applications with Rust (>27k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "ReactiveX/RxJava",
+    "url": "https://github.com/ReactiveX/RxJava",
+    "primary_language": "Java",
+    "stars_at_collection": 48000,
+    "license": "Apache-2.0",
+    "selection_reason": "Reactive Extensions for the JVM (>48k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "DapperLib/Dapper",
+    "url": "https://github.com/DapperLib/Dapper",
+    "primary_language": "C#",
+    "stars_at_collection": 17800,
+    "license": "Apache-2.0",
+    "selection_reason": "Simple object mapper for .NET in C# (>17k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "jekyll/jekyll",
+    "url": "https://github.com/jekyll/jekyll",
+    "primary_language": "Ruby",
+    "stars_at_collection": 49500,
+    "license": "MIT",
+    "selection_reason": "Blog-aware static site generator in Ruby (>49k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "guzzle/guzzle",
+    "url": "https://github.com/guzzle/guzzle",
+    "primary_language": "PHP",
+    "stars_at_collection": 23300,
+    "license": "MIT",
+    "selection_reason": "PHP HTTP client (>23k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "trpc/trpc",
+    "url": "https://github.com/trpc/trpc",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 35500,
+    "license": "MIT",
+    "selection_reason": "End-to-end typesafe APIs for TypeScript (>35k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "sveltejs/svelte",
+    "url": "https://github.com/sveltejs/svelte",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 80500,
+    "license": "MIT",
+    "selection_reason": "Cybernetically enhanced web apps compiler and runtime (>80k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "aio-libs/aiohttp",
+    "url": "https://github.com/aio-libs/aiohttp",
+    "primary_language": "Python",
+    "stars_at_collection": 15200,
+    "license": "Apache-2.0",
+    "selection_reason": "Asynchronous HTTP client/server framework for asyncio and Python (>15k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "gabime/spdlog",
+    "url": "https://github.com/gabime/spdlog",
+    "primary_language": "C++",
+    "stars_at_collection": 25000,
+    "license": "MIT",
+    "selection_reason": "Fast C++ logging library (>25k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "libuv/libuv",
+    "url": "https://github.com/libuv/libuv",
+    "primary_language": "C",
+    "stars_at_collection": 24500,
+    "license": "MIT",
+    "selection_reason": "Cross-platform asynchronous I/O in C (>24k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "gofiber/fiber",
+    "url": "https://github.com/gofiber/fiber",
+    "primary_language": "Go",
+    "stars_at_collection": 34500,
+    "license": "MIT",
+    "selection_reason": "Express-inspired web framework written in Go (>34k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "serde-rs/serde",
+    "url": "https://github.com/serde-rs/serde",
+    "primary_language": "Rust",
+    "stars_at_collection": 10100,
+    "license": "Apache-2.0",
+    "selection_reason": "Serialization framework for Rust (>10k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "TanStack/query",
+    "url": "https://github.com/TanStack/query",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 43000,
+    "license": "MIT",
+    "selection_reason": "Powerful asynchronous state management for TS/JS (>43k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "SortableJS/Sortable",
+    "url": "https://github.com/SortableJS/Sortable",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 29500,
+    "license": "MIT",
+    "selection_reason": "Reorderable drag-and-drop lists for modern browsers (>29k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "tornadoweb/tornado",
+    "url": "https://github.com/tornadoweb/tornado",
+    "primary_language": "Python",
+    "stars_at_collection": 21800,
+    "license": "Apache-2.0",
+    "selection_reason": "Python web framework and asynchronous networking library (>21k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "fmtlib/fmt",
+    "url": "https://github.com/fmtlib/fmt",
+    "primary_language": "C++",
+    "stars_at_collection": 21000,
+    "license": "MIT",
+    "selection_reason": "Modern C++ formatting library (>21k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "lz4/lz4",
+    "url": "https://github.com/lz4/lz4",
+    "primary_language": "C",
+    "stars_at_collection": 10600,
+    "license": "BSD-2-Clause",
+    "selection_reason": "Extremely Fast Compression algorithm in C (>10k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "spf13/cobra",
+    "url": "https://github.com/spf13/cobra",
+    "primary_language": "Go",
+    "stars_at_collection": 38500,
+    "license": "Apache-2.0",
+    "selection_reason": "Commander for modern Go CLI interactions (>38k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "BurntSushi/ripgrep",
+    "url": "https://github.com/BurntSushi/ripgrep",
+    "primary_language": "Rust",
+    "stars_at_collection": 50000,
+    "license": "MIT",
+    "selection_reason": "Fast line-oriented regex search tool in Rust (>50k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "pmndrs/zustand",
+    "url": "https://github.com/pmndrs/zustand",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 49000,
+    "license": "MIT",
+    "selection_reason": "Bear necessities for state management in React/TypeScript (>49k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "highlightjs/highlight.js",
+    "url": "https://github.com/highlightjs/highlight.js",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 24000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "JavaScript syntax highlighter (>24k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "scrapy/scrapy",
+    "url": "https://github.com/scrapy/scrapy",
+    "primary_language": "Python",
+    "stars_at_collection": 53500,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Fast high-level web crawling and scraping framework for Python (>53k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "catchorg/Catch2",
+    "url": "https://github.com/catchorg/Catch2",
+    "primary_language": "C++",
+    "stars_at_collection": 19000,
+    "license": "BSL-1.0",
+    "selection_reason": "Modern C++-native test framework for unit-tests, TDD and BDD (>19k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "nothings/stb",
+    "url": "https://github.com/nothings/stb",
+    "primary_language": "C",
+    "stars_at_collection": 27500,
+    "license": "MIT",
+    "selection_reason": "Single-file public domain libraries for C/C++ (>27k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "spf13/viper",
+    "url": "https://github.com/spf13/viper",
+    "primary_language": "Go",
+    "stars_at_collection": 27500,
+    "license": "MIT",
+    "selection_reason": "Go configuration with fangs (>27k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "sharkdp/bat",
+    "url": "https://github.com/sharkdp/bat",
+    "primary_language": "Rust",
+    "stars_at_collection": 50500,
+    "license": "Apache-2.0",
+    "selection_reason": "A cat(1) clone with syntax highlighting and Git integration in Rust (>50k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "drizzle-team/drizzle-orm",
+    "url": "https://github.com/drizzle-team/drizzle-orm",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 25500,
+    "license": "Apache-2.0",
+    "selection_reason": "Headless TypeScript ORM for SQL databases (>25k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "markedjs/marked",
+    "url": "https://github.com/markedjs/marked",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 33500,
+    "license": "MIT",
+    "selection_reason": "High-speed Markdown parser and compiler in JS (>33k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "sqlalchemy/sqlalchemy",
+    "url": "https://github.com/sqlalchemy/sqlalchemy",
+    "primary_language": "Python",
+    "stars_at_collection": 10200,
+    "license": "MIT",
+    "selection_reason": "The Database Toolkit for Python (>10k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "google/googletest",
+    "url": "https://github.com/google/googletest",
+    "primary_language": "C++",
+    "stars_at_collection": 35000,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Google Testing and Mocking Framework in C++ (>35k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "uber-go/zap",
+    "url": "https://github.com/uber-go/zap",
+    "primary_language": "Go",
+    "stars_at_collection": 22500,
+    "license": "MIT",
+    "selection_reason": "Blazing fast, structured, leveled logging in Go (>22k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "honojs/hono",
+    "url": "https://github.com/honojs/hono",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 22000,
+    "license": "MIT",
+    "selection_reason": "Web framework built on Web Standards for Cloudflare/Deno/Bun/Node (>22k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "iamkun/dayjs",
+    "url": "https://github.com/iamkun/dayjs",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 47000,
+    "license": "MIT",
+    "selection_reason": "Fast 2kB immutable date-time library (>47k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "PrefectHQ/prefect",
+    "url": "https://github.com/PrefectHQ/prefect",
+    "primary_language": "Python",
+    "stars_at_collection": 17500,
+    "license": "Apache-2.0",
+    "selection_reason": "Workflow orchestration framework for resilient data pipelines in Python (>17k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "google/benchmark",
+    "url": "https://github.com/google/benchmark",
+    "primary_language": "C++",
+    "stars_at_collection": 17200,
+    "license": "Apache-2.0",
+    "selection_reason": "A microbenchmark support library in C++ (>17k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "vitest-dev/vitest",
+    "url": "https://github.com/vitest-dev/vitest",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 13500,
+    "license": "MIT",
+    "selection_reason": "Next generation testing framework powered by Vite (>13k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "eligrey/FileSaver.js",
+    "url": "https://github.com/eligrey/FileSaver.js",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 21500,
+    "license": "MIT",
+    "selection_reason": "HTML5 saveAs() FileSaver implementation (>21k stars)"
+  },
+  {
+    "owner_repo": "gradio-app/gradio",
+    "url": "https://github.com/gradio-app/gradio",
+    "primary_language": "Python",
+    "stars_at_collection": 35000,
+    "license": "Apache-2.0",
+    "selection_reason": "Build and share delightful machine learning apps in Python (>35k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "abseil/abseil-cpp",
+    "url": "https://github.com/abseil/abseil-cpp",
+    "primary_language": "C++",
+    "stars_at_collection": 15200,
+    "license": "Apache-2.0",
+    "selection_reason": "Abseil Common Libraries (C++) (>15k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "reduxjs/redux-toolkit",
+    "url": "https://github.com/reduxjs/redux-toolkit",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 10900,
+    "license": "MIT",
+    "selection_reason": "Official, opinionated, batteries-included toolset for Redux (>10k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "JedWatson/classnames",
+    "url": "https://github.com/JedWatson/classnames",
+    "primary_language": "JavaScript",
+    "stars_at_collection": 17500,
+    "license": "MIT",
+    "selection_reason": "JavaScript utility for conditionally joining classNames (>17k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "arrow-py/arrow",
+    "url": "https://github.com/arrow-py/arrow",
+    "primary_language": "Python",
+    "stars_at_collection": 11800,
+    "license": "Apache-2.0",
+    "selection_reason": "Better dates & times for Python (>11k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "pybind/pybind11",
+    "url": "https://github.com/pybind/pybind11",
+    "primary_language": "C++",
+    "stars_at_collection": 16200,
+    "license": "BSD-3-Clause",
+    "selection_reason": "Seamless operability between C++11 and Python (>16k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "daybrush/moveable",
+    "url": "https://github.com/daybrush/moveable",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 10200,
+    "license": "MIT",
+    "selection_reason": "Draggable, resizable, scalable TypeScript UI engine (>10k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "benoitc/gunicorn",
+    "url": "https://github.com/benoitc/gunicorn",
+    "primary_language": "Python",
+    "stars_at_collection": 10000,
+    "license": "MIT",
+    "selection_reason": "Green Unicorn WSGI HTTP Server for UNIX/Python (>10k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "ocornut/imgui",
+    "url": "https://github.com/ocornut/imgui",
+    "primary_language": "C++",
+    "stars_at_collection": 62000,
+    "license": "MIT",
+    "selection_reason": "Dear ImGui: Bloat-free Graphical User interface for C++ (>62k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "inversify/InversifyJS",
+    "url": "https://github.com/inversify/InversifyJS",
+    "primary_language": "TypeScript",
+    "stars_at_collection": 11400,
+    "license": "MIT",
+    "selection_reason": "IoC container for TypeScript and JavaScript apps (>11k stars, actively maintained)"
+  },
+  {
+    "owner_repo": "marshmallow-code/marshmallow",
+    "url": "https://github.com/marshmallow-code/marshmallow",
+    "primary_language": "Python",
+    "stars_at_collection": 10100,
+    "license": "MIT",
+    "selection_reason": "Lightweight library for converting complex objects to and from simple Python datatypes (>10k stars)"
+  },
+  {
+    "owner_repo": "simdjson/simdjson",
+    "url": "https://github.com/simdjson/simdjson",
+    "primary_language": "C++",
+    "stars_at_collection": 19500,
+    "license": "Apache-2.0",
+    "selection_reason": "Parsing gigabytes of JSON per second in C++ (>19k stars, actively maintained)"
+  }
+]

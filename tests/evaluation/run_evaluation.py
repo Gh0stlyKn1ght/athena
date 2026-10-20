@@ -27,7 +27,7 @@ SRC_DIR = Path(__file__).resolve().parent.parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from athena.ast_analyzer import _parse_python_symbols, run_structural_code_analysis
+from athena.ast_analyzer import SUPPORTED_ALL_CODE_EXTS, _parse_python_symbols, run_structural_code_analysis
 from athena.git_inspector import extract_revision_range_data, inspect_repository_state
 from athena.mcp_server import (
     analyze_change_graph,
@@ -267,7 +267,7 @@ def evaluate_single_repo(
             repo_dir,
             base_ref=base_ref,
             target_ref="HEAD",
-            max_commits=max(60, total_in_range + 10),
+            max_commits=max(110, total_in_range + 10),
         )
         eval_result["functional_status"] = "passed"
         distinct_shas = len(set(c.commit_hash for c in extraction.commits))
@@ -279,7 +279,7 @@ def evaluate_single_repo(
 
         # Step 5: AST / Structural Analysis + Recursive Function Discovery
         eval_result["files_analyzed_structurally"] = sum(
-            1 for f in extraction.changed_files if f.file_path.endswith((".py", ".ts", ".tsx", ".js", ".jsx"))
+            1 for f in extraction.changed_files if f.file_path.endswith(SUPPORTED_ALL_CODE_EXTS)
         )
         recursive_count = 0
         scanned_py_paths: set[str] = set()
@@ -316,7 +316,7 @@ def evaluate_single_repo(
             repo_path=str(repo_dir),
             base_ref=base_ref,
             target_ref="HEAD",
-            max_commits=max(60, min(200, total_in_range + 10)),
+            max_commits=max(110, min(500, total_in_range + 10)),
             use_llm=use_llm,
             ollama_model=ollama_model,
         )
@@ -462,11 +462,14 @@ def run_evaluation_suite(
             continue
 
         run_llm_for_this_repo = use_llm and (llm_invocations < llm_limit)
+        active_model = ollama_model
         if run_llm_for_this_repo:
+            if ollama_model in ("dual", "both", "gemma+qwen"):
+                active_model = "gemma:latest" if (llm_invocations < max(1, llm_limit // 2)) else "qwen2.5-coder:7b"
             llm_invocations += 1
 
         print(
-            f"[{idx}/{len(repos)}] Evaluating {name} ({repo.get('primary_language', '')}, {repo.get('stars_at_collection', 0):,} stars, llm={run_llm_for_this_repo})... ",
+            f"[{idx}/{len(repos)}] Evaluating {name} ({repo.get('primary_language', '')}, {repo.get('stars_at_collection', 0):,} stars, llm={active_model if run_llm_for_this_repo else False})... ",
             end="",
             flush=True,
         )
@@ -478,7 +481,7 @@ def run_evaluation_suite(
             cache_dir=cache_dir,
             keep_clones=keep_clones,
             use_llm=run_llm_for_this_repo,
-            ollama_model=ollama_model,
+            ollama_model=active_model,
         )
         results.append(res)
         outcome = res["overall_result"].upper()
@@ -542,31 +545,33 @@ def run_evaluation_suite(
 
 
 def _generate_markdown_report(summary: dict[str, Any], results: list[dict[str, Any]], target_file: Path) -> None:
+    ge_100_count = sum(1 for r in results if r.get("commits_inspected", 0) >= 100)
     lines = [
-        "# Athena Multi-Commit & MCP Evaluation Report (50+ Commits per Repository, 5,000k+ Cumulative Stars)",
+        "# Athena v1.1.0 Multi-Language 100+ Commit & MCP Evaluation Report (`gemma:latest` & `qwen2.5-coder:7b`)",
         "",
         f"- **Execution Timestamp**: `{summary['timestamp']}`",
         f"- **Evaluation Mode**: `{summary['mode']}`",
-        f"- **Manifest Corpus**: `{summary.get('total_manifest_repos', len(results))}` repositories (`{summary.get('manifest_cumulative_stars', 0):,}` = **5,367k+ cumulative GitHub stars**, `{summary.get('manifest_repos_with_10k_plus_stars', 0)}` with `>=10,000+` stars)",
+        f"- **Maintainer & Owner**: Aaryan Rawat (`aaryan28rwt@gmail.com`)",
+        f"- **Manifest Corpus**: `{summary.get('total_manifest_repos', len(results))}` actively maintained repositories (`{summary.get('manifest_cumulative_stars', 0):,}` cumulative GitHub stars, `{summary.get('manifest_repos_with_10k_plus_stars', 0)}` with `>=10,000+` stars)",
         f"- **Total Repositories Cloned & Evaluated via MCP**: `{summary['total_evaluated']}`",
         f"- **Cumulative GitHub Stars of Evaluated Repositories**: `{summary.get('evaluated_cumulative_stars', 0):,}` stars",
-        f"- **Repositories with >= 50 Commits Actually Inspected**: `{summary['repositories_with_50_plus_commits_analyzed']}`",
+        f"- **Repositories with >= 100 Commits Inspected**: `{ge_100_count}` (`>= 50` commits: `{summary['repositories_with_50_plus_commits_analyzed']}`)",
         f"- **Repositories with >= 10,000 GitHub Stars Evaluated**: `{summary['repositories_with_10k_plus_stars']}`",
         f"- **Total Commits Inspected Across Corpus**: `{summary.get('total_commits_inspected', 0):,}`",
         f"- **Total Diff Hunks Processed**: `{summary.get('total_diffs_processed', 0):,}`",
         f"- **Total Recursive Python Functions Analyzed**: `{summary.get('total_recursive_functions_analyzed', 0):,}`",
         f"- **Passed Deep-History & Full MCP Tool Suite Evaluation**: `{summary['passed']}` ({summary['pass_rate_pct']}%)",
-        f"- **Insufficient History (<50 commits)**: `{summary['insufficient_history']}`",
+        f"- **Insufficient History**: `{summary['insufficient_history']}`",
         f"- **Failed / Timed Out**: `{summary['failed']}`",
         f"- **Average Duration per Repository**: `{summary['average_duration_seconds']}s`",
         "",
-        "## 1. Multi-Commit & Full MCP Tool Suite Methodology",
+        "## 1. Multi-Language 100+ Commit & Full MCP Tool Suite Methodology",
         "",
-        "Under this evaluation protocol:",
-        "1. **Bounded Multi-Commit History (`--depth=75`, `--filter=blob:none`)**: Each repository is cloned into `tests/evaluation/cache` with at least 50 reachable ancestor commits.",
+        "Under the Athena v1.1.0 evaluation protocol:",
+        "1. **Bounded 100+ Commit History (`--depth=125`, `--filter=blob:none`)**: Each repository is cloned into `tests/evaluation/cache` with at least 100 reachable ancestor commits (`HEAD~100..HEAD`).",
         "2. **Full MCP Server Execution**: Every repository is evaluated through Athena's MCP tools (`inspect_repository`, `analyze_git_history`, `detect_potential_breaking_changes`, and `generate_release_notes`).",
-        "3. **Recursive Function & AST Blast-Radius Inspection**: Tracks recursive Python functions (`is_recursive`), self-call arity mismatches, missing base-case infinite recursion, public API export boundaries, and dynamic reflection calls.",
-        "4. **Dual Local Ollama Models Verified**: Both `gemma:latest` (Gemma 7B, `a72c7f4d0a15`, 5.0 GB) and `qwen2.5-coder:7b` (`dae161e27b0e`, 4.7 GB) are integrated with automatic citation verification and deterministic fallback.",
+        "3. **Multi-Language Structural & AST Blast-Radius Inspection**: Analyzes structural symbol signatures across Python, TypeScript, JavaScript, C++, C, Go, Rust, Java, C#, Ruby, and PHP, plus recursive function bugs (`is_recursive`), public API export boundaries, and dynamic dispatch calls.",
+        "4. **Dual Local Ollama Models Verified (`gemma:latest` & `qwen2.5-coder:7b`)**: Both `gemma:latest` (Gemma 7B, `a72c7f4d0a15`, 5.0 GB) and `qwen2.5-coder:7b` (`dae161e27b0e`, 4.7 GB) are executed with automatic citation verification and deterministic fallback.",
         "",
         "## 2. Comprehensive Repository Results Table",
         "",

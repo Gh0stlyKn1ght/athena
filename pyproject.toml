@@ -4,16 +4,28 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "athena-mcp"
-version = "1.0.0"
-description = "Athena: Local-First, Evidence-Backed Git Intelligence, Breaking-Change, and Release Notes MCP Server"
+version = "1.1.0"
+description = "Athena: Local-First, Evidence-Backed Multi-Language Git & AST Change Intelligence, Breaking-Change, and Release Notes MCP Server"
 readme = "README.md"
 license = { text = "Apache-2.0" }
+authors = [
+    { name = "Aaryan Rawat", email = "aaryan28rwt@gmail.com" },
+]
+maintainers = [
+    { name = "Aaryan Rawat", email = "aaryan28rwt@gmail.com" },
+]
 requires-python = ">=3.12"
 dependencies = [
     "mcp>=1.2.0",
     "pydantic>=2.7.0",
     "httpx>=0.27.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/aaryanrwt/athena"
+Repository = "https://github.com/aaryanrwt/athena"
+Issues = "https://github.com/aaryanrwt/athena/issues"
+Security = "https://github.com/aaryanrwt/athena/blob/main/SECURITY.md"
 
 [project.optional-dependencies]
 dev = [

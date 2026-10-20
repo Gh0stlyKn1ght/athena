@@ -59,7 +59,7 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the project maintainer at [GitHub Issues / Discussions](https://github.com/aaryanrwt/athena/issues).
+reported to the project owner and maintainer (**Aaryan Rawat** — `aaryan28rwt@gmail.com`) or via [GitHub Issues / Discussions](https://github.com/aaryanrwt/athena/issues).
 All complaints will be reviewed and investigated promptly and fairly.
 
 All project maintainers are obligated to respect the privacy and security of the

@@ -29,8 +29,9 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(
         prog="athena",
-        description="Athena: Local-First Git & AST Release-Readiness and Change-Intelligence Engine",
+        description="Athena v1.1.0: Local-First Multi-Language Git & AST Release-Readiness and Change-Intelligence Engine",
     )
+    parser.add_argument("--version", action="version", version="athena 1.1.0")
     sub = parser.add_subparsers(dest="command")
 
     # mcp server command (default if no subcommand or 'mcp')
@@ -48,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     p_analyze.add_argument("repo_path", help="Path to local Git repository")
     p_analyze.add_argument("--base", default="AUTO", help="Base revision (tag, branch, SHA, or AUTO)")
     p_analyze.add_argument("--target", default="HEAD", help="Target revision (HEAD, tag, branch, or WORKING_TREE)")
-    p_analyze.add_argument("--max-commits", type=int, default=50, help="Maximum commits to inspect")
+    p_analyze.add_argument("--max-commits", type=int, default=100, help="Maximum commits to inspect (1..500)")
     p_analyze.add_argument("--llm", action="store_true", help="Enable optional local LLM (qwen2.5-coder:7b / gemma:latest) enhancement")
     p_analyze.add_argument("--no-llm", action="store_true", help="Force deterministic AST/diff mode (default)")
     p_analyze.add_argument("--model", default=DEFAULT_OLLAMA_MODEL, help="Local Ollama model tag (e.g. qwen2.5-coder:7b, gemma:latest)")

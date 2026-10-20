@@ -1000,6 +1000,13 @@ def _compare_python_symbol(
     return findings
 
 
+SUPPORTED_NON_PY_CODE_EXTS = (
+    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+    ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
+    ".go", ".rs", ".java", ".kt", ".scala", ".cs", ".rb", ".php", ".swift",
+)
+SUPPORTED_ALL_CODE_EXTS = (".py", *SUPPORTED_NON_PY_CODE_EXTS)
+
 _TS_EXPORT_FUNC_RE = re.compile(
     r"^\s*export\s+(?:default\s+)?(?:async\s+)?function\s+(?P<name>[A-Za-z0-9_$]+)(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*:\s*(?P<ret>[^{;]+))?",
     re.MULTILINE,
@@ -1016,6 +1023,51 @@ _TS_EXPORT_TYPE_RE = re.compile(
     r"^\s*export\s+(?P<kind>interface|type|enum)\s+(?P<name>[A-Za-z0-9_$]+)(?:[<={\s])",
     re.MULTILINE,
 )
+_JS_TOP_FUNC_RE = re.compile(
+    r"^(?:async\s+)?function\s+(?P<name>[A-Za-z_$][A-Za-z0-9_$]*)\s*\((?P<params>[^)]*)\)",
+    re.MULTILINE,
+)
+_GO_FUNC_RE = re.compile(
+    r"^func\s+(?:\((?P<recv>[^)]+)\)\s*)?(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)\s*(?P<ret>[^{;\n]*)",
+    re.MULTILINE,
+)
+_GO_TYPE_RE = re.compile(
+    r"^type\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s+(?P<kind>struct|interface)\b",
+    re.MULTILINE,
+)
+_RUST_FN_RE = re.compile(
+    r"^\s*(?P<vis>pub(?:\([^)]+\))?\s+)?(?:const\s+)?(?:async\s+)?(?:unsafe\s+)?fn\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:<[^>]*>)?\s*\((?P<params>[^)]*)\)(?:\s*->\s*(?P<ret>[^{;]+))?",
+    re.MULTILINE,
+)
+_RUST_TYPE_RE = re.compile(
+    r"^\s*(?P<vis>pub(?:\([^)]+\))?\s+)?(?P<kind>struct|enum|trait)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)",
+    re.MULTILINE,
+)
+_CPP_CLASS_RE = re.compile(
+    r"^\s*(?:template\s*<[^>]*>\s*)?(?P<kind>class|struct|enum(?:\s+class)?)\s+(?:[A-Z0-9_]+\s+)?(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*(?P<base>[^{;]+))?\{",
+    re.MULTILINE,
+)
+_CPP_FUNC_RE = re.compile(
+    r"^(?:[\w:*&<>]+\s+)+(?P<name>[A-Za-z_~][A-Za-z0-9_:]*)\s*\((?P<params>[^;{}()]*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?=\{)",
+    re.MULTILINE,
+)
+_JAVA_CS_CLASS_RE = re.compile(
+    r"^\s*(?:public|protected|internal)?\s*(?:abstract\s+|final\s+|static\s+|sealed\s+|partial\s+)*(?P<kind>class|interface|enum|record)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)",
+    re.MULTILINE,
+)
+_JAVA_CS_METHOD_RE = re.compile(
+    r"^\s*(?:public|protected)\s+(?:static\s+|final\s+|abstract\s+|synchronized\s+|virtual\s+|override\s+|async\s+)*(?P<ret>[A-Za-z0-9_<>\[\].,?\s]+)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)",
+    re.MULTILINE,
+)
+_RB_PHP_SWIFT_FUNC_RE = re.compile(
+    r"^\s*(?:public\s+|protected\s+|static\s+)*(?:def|function|func)\s+(?P<name>[A-Za-z_][A-Za-z0-9_?!]*)\s*(?:\((?P<params>[^)]*)\))?(?:\s*(?::|->)\s*(?P<ret>[^{;\n]+))?",
+    re.MULTILINE,
+)
+_RB_PHP_SWIFT_CLASS_RE = re.compile(
+    r"^\s*(?:public\s+|final\s+|abstract\s+)*(?P<kind>class|module|interface|trait|struct|protocol|enum)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)",
+    re.MULTILINE,
+)
+_CPP_CONTROL_KEYWORDS = {"if", "for", "while", "switch", "catch", "return", "sizeof", "alignof", "decltype"}
 
 
 def _parse_ts_js_symbols(source: str) -> dict[str, tuple[str, int, str, list[str], str | None]]:
@@ -1051,10 +1103,134 @@ def _parse_ts_js_symbols(source: str) -> dict[str, tuple[str, int, str, list[str
 
     for match in _TS_EXPORT_TYPE_RE.finditer(source):
         name = match.group("name")
-        kind_name = match.group("kind").lower()
+        kind_raw = match.group("kind").lower()
+        kind_name = "enum" if kind_raw == "enum" else "interface"
         line_no = source.count("\n", 0, match.start()) + 1
-        sig = f"export {kind_name} {name}"
+        sig = f"export {kind_raw} {name}"
         symbols[name] = (kind_name, line_no, sig, [], None)
+
+    for match in _JS_TOP_FUNC_RE.finditer(source):
+        name = match.group("name")
+        if name in symbols or name.startswith("_"):
+            continue
+        params_raw = match.group("params").strip()
+        line_no = source.count("\n", 0, match.start()) + 1
+        param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
+        sig = f"function {name}({params_raw})"
+        symbols[name] = ("function", line_no, sig, param_items, None)
+
+    return symbols
+
+
+def _parse_multilang_symbols(
+    source: str,
+    file_path: str,
+) -> dict[str, tuple[str, int, str, list[str], str | None]]:
+    """Extract structural symbols (functions, methods, classes, structs, interfaces, enums) across
+    TypeScript/JS, C/C++, Go, Rust, Java, Kotlin, Scala, C#, Ruby, PHP, and Swift.
+    Returns dict: name -> (symbol_kind, line_no, signature_str, param_list, return_type)
+    """
+    if file_path.endswith((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")):
+        return _parse_ts_js_symbols(source)
+
+    symbols: dict[str, tuple[str, int, str, list[str], str | None]] = {}
+
+    if file_path.endswith(".go"):
+        for m in _GO_FUNC_RE.finditer(source):
+            name = m.group("name")
+            recv = (m.group("recv") or "").strip()
+            params_raw = m.group("params").strip()
+            ret_raw = (m.group("ret") or "").strip() or None
+            line_no = source.count("\n", 0, m.start()) + 1
+            param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
+            qname = name
+            if recv:
+                recv_type = recv.split()[-1].lstrip("*")
+                qname = f"{recv_type}.{name}"
+            sig = f"func {f'({recv}) ' if recv else ''}{name}({params_raw})" + (f" {ret_raw}" if ret_raw else "")
+            symbols[qname] = ("method" if recv else "function", line_no, sig, param_items, ret_raw)
+        for m in _GO_TYPE_RE.finditer(source):
+            name = m.group("name")
+            kind_raw = m.group("kind")
+            line_no = source.count("\n", 0, m.start()) + 1
+            symbols[name] = ("interface" if kind_raw == "interface" else "class", line_no, f"type {name} {kind_raw}", [], None)
+        return symbols
+
+    if file_path.endswith(".rs"):
+        for m in _RUST_FN_RE.finditer(source):
+            name = m.group("name")
+            vis = (m.group("vis") or "").strip()
+            params_raw = m.group("params").strip()
+            ret_raw = (m.group("ret") or "").strip() or None
+            line_no = source.count("\n", 0, m.start()) + 1
+            param_items = [p.strip() for p in params_raw.split(",") if p.strip() and p.strip() not in ("self", "&self", "&mut self")]
+            sig = f"{'pub ' if vis else ''}fn {name}({params_raw})" + (f" -> {ret_raw}" if ret_raw else "")
+            symbols[name] = ("function", line_no, sig, param_items, ret_raw)
+        for m in _RUST_TYPE_RE.finditer(source):
+            name = m.group("name")
+            vis = (m.group("vis") or "").strip()
+            kind_raw = m.group("kind")
+            kind_mapped = "enum" if kind_raw == "enum" else ("interface" if kind_raw == "trait" else "class")
+            line_no = source.count("\n", 0, m.start()) + 1
+            symbols[name] = (kind_mapped, line_no, f"{'pub ' if vis else ''}{kind_raw} {name}", [], None)
+        return symbols
+
+    if file_path.endswith((".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx")):
+        for m in _CPP_CLASS_RE.finditer(source):
+            name = m.group("name")
+            kind_raw = m.group("kind")
+            base = (m.group("base") or "").strip() or None
+            line_no = source.count("\n", 0, m.start()) + 1
+            kind_mapped = "enum" if "enum" in kind_raw else "class"
+            sig = f"{kind_raw} {name}" + (f" : {base}" if base else "")
+            symbols[name] = (kind_mapped, line_no, sig, [], base)
+        for m in _CPP_FUNC_RE.finditer(source):
+            name = m.group("name").strip()
+            short_n = name.split("::")[-1]
+            if short_n in _CPP_CONTROL_KEYWORDS or short_n.startswith("~"):
+                continue
+            params_raw = " ".join(m.group("params").split())
+            line_no = source.count("\n", 0, m.start()) + 1
+            param_items = [p.strip() for p in params_raw.split(",") if p.strip() and p.strip() != "void"]
+            sig = f"{name}({params_raw})"
+            symbols[name] = ("method" if "::" in name else "function", line_no, sig, param_items, None)
+        return symbols
+
+    if file_path.endswith((".java", ".kt", ".scala", ".cs")):
+        for m in _JAVA_CS_CLASS_RE.finditer(source):
+            name = m.group("name")
+            kind_raw = m.group("kind").lower()
+            kind_mapped = "enum" if kind_raw == "enum" else ("interface" if kind_raw == "interface" else "class")
+            line_no = source.count("\n", 0, m.start()) + 1
+            symbols[name] = (kind_mapped, line_no, f"{kind_raw} {name}", [], None)
+        for m in _JAVA_CS_METHOD_RE.finditer(source):
+            name = m.group("name")
+            if name in _CPP_CONTROL_KEYWORDS or name in symbols:
+                continue
+            ret_raw = " ".join(m.group("ret").split())
+            params_raw = " ".join(m.group("params").split())
+            line_no = source.count("\n", 0, m.start()) + 1
+            param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
+            sig = f"{ret_raw} {name}({params_raw})"
+            symbols[name] = ("method", line_no, sig, param_items, ret_raw)
+        return symbols
+
+    if file_path.endswith((".rb", ".php", ".swift")):
+        for m in _RB_PHP_SWIFT_CLASS_RE.finditer(source):
+            name = m.group("name")
+            kind_raw = m.group("kind").lower()
+            kind_mapped = "enum" if kind_raw == "enum" else ("interface" if kind_raw in ("interface", "trait", "protocol") else "class")
+            line_no = source.count("\n", 0, m.start()) + 1
+            symbols[name] = (kind_mapped, line_no, f"{kind_raw} {name}", [], None)
+        for m in _RB_PHP_SWIFT_FUNC_RE.finditer(source):
+            name = m.group("name")
+            params_raw = (m.group("params") or "").strip()
+            ret_raw = (m.group("ret") or "").strip() or None
+            line_no = source.count("\n", 0, m.start()) + 1
+            param_items = [p.strip() for p in params_raw.split(",") if p.strip()]
+            sig = f"def {name}({params_raw})" + (f" -> {ret_raw}" if ret_raw else "")
+            symbols[name] = ("function", line_no, sig, param_items, ret_raw)
+        return symbols
 
     return symbols
 
@@ -1309,13 +1485,13 @@ def _scan_callers_and_tests_and_docs(
     files_skipped_or_err = 0
 
     eligible_scan_files = [
-        f for f in all_files if f.endswith((".py", ".ts", ".tsx", ".js", ".jsx", ".md", ".rst"))
+        f for f in all_files if f.endswith((*SUPPORTED_ALL_CODE_EXTS, ".md", ".rst"))
     ]
     max_scan_files = 1000
 
     for rel_path in eligible_scan_files[:max_scan_files]:
         is_py = rel_path.endswith(".py")
-        is_ts = rel_path.endswith((".ts", ".tsx", ".js", ".jsx"))
+        is_ts = rel_path.endswith(SUPPORTED_NON_PY_CODE_EXTS)
         is_md = rel_path.endswith((".md", ".rst"))
 
         if is_py or is_ts:
@@ -1543,7 +1719,7 @@ def _scan_callers_and_tests_and_docs(
         extra_code = sum(
             1
             for f in eligible_scan_files[max_scan_files:]
-            if f.endswith((".py", ".ts", ".tsx", ".js", ".jsx"))
+            if f.endswith(SUPPORTED_ALL_CODE_EXTS)
         )
         total_code_eligible += extra_code
         files_skipped_or_err += extra_code
@@ -1857,14 +2033,15 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
                     fdelta.symbol_changes.append(sc)
                     modified_symbol_names.add(qname)
 
-        elif fpath.endswith((".ts", ".tsx", ".js", ".jsx")):
-            old_ts = _parse_ts_js_symbols(base_src) if base_src else {}
-            new_ts = _parse_ts_js_symbols(target_src) if target_src else {}
+        elif fpath.endswith(SUPPORTED_NON_PY_CODE_EXTS):
+            old_ts = _parse_multilang_symbols(base_src, fpath) if base_src else {}
+            new_ts = _parse_multilang_symbols(target_src, fpath) if target_src else {}
             ts_export_reason = (
                 f"Exported from package entrypoint `{fpath}`"
-                if Path(fpath).stem == "index"
-                else f"Explicitly exported with `export` keyword in `{fpath}`"
+                if Path(fpath).stem in ("index", "mod", "lib")
+                else f"Public/exported declaration in `{fpath}`"
             )
+            # 1. Removed & Modified symbols
             for name, (kind, old_line, old_sig, old_params, old_ret) in old_ts.items():
                 if name not in new_ts:
                     b_span = LineSpan(start_line=old_line, end_line=old_line)
@@ -1921,6 +2098,31 @@ def run_structural_code_analysis(extraction: RawRangeExtraction) -> StructuralAn
                         symbol_changes.append(sc)
                         fdelta.symbol_changes.append(sc)
                         modified_symbol_names.add(name)
+
+            # 2. Added symbols
+            for name, (kind, new_line, new_sig, new_params, new_ret) in new_ts.items():
+                if name not in old_ts:
+                    t_span = LineSpan(start_line=new_line, end_line=new_line)
+                    reason = f"Public {kind} '{name}' was added in {fpath}."
+                    eid = _register_symbol_evidence(fpath, None, t_span, f"+ {new_sig}", reason)
+                    sc = SymbolSignatureChange(
+                        file_path=fpath,
+                        symbol_name=name,
+                        symbol_kind=kind,  # type: ignore[arg-type]
+                        change_kind="added",
+                        old_signature=None,
+                        new_signature=new_sig,
+                        is_breaking_candidate=False,
+                        is_public_api_export=True,
+                        public_api_exposure_reason=ts_export_reason,
+                        severity="low",
+                        details=reason,
+                        target_line_span=t_span,
+                        evidence_ids=[eid],
+                    )
+                    symbol_changes.append(sc)
+                    fdelta.symbol_changes.append(sc)
+                    modified_symbol_names.add(name)
 
     (
         caller_impacts,

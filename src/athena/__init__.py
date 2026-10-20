@@ -1,3 +1,5 @@
-"""Athena: Local-First, Evidence-Backed Git Intelligence & Release Engineering MCP Server."""
+"""Athena: Local-First, Evidence-Backed Multi-Language Git & AST Change Intelligence MCP Server."""
 
-__version__ = "0.1.0"
+__version__ = "1.1.0"
+__author__ = "Aaryan Rawat"
+__email__ = "aaryan28rwt@gmail.com"

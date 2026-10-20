@@ -1,4 +1,4 @@
-"""Capability E: Athena Model Context Protocol (MCP) Server Implementation."""
+"""Athena Model Context Protocol (MCP) Server Implementation."""
 
 from __future__ import annotations
 
@@ -21,13 +21,13 @@ from athena.release_notes import (
 
 mcp_app = MCPServer(
     name="athena-mcp",
-    version="0.1.0",
+    version="1.1.0",
     instructions=(
-        "Athena is an offline-capable, local-first Git intelligence and AST change analysis MCP server. "
-        "All core operations (Git diff inspection, Python AST analysis, TypeScript/JS structural signature diffing, "
-        "caller blast-radius scanning, doc drift detection, evidence verification, release notes, and breaking change "
-        "detection) operate deterministically without requiring any LLM. Local Ollama (qwen2.5-coder:7b) is an optional "
-        "enhancement when use_llm=True is explicitly enabled. All repository operations are strictly read-only."
+        "Athena v1.1.0 is an offline-capable, local-first multi-language Git intelligence and AST change analysis MCP server. "
+        "All core operations (Git diff inspection, Python AST analysis, TypeScript/JS, C/C++, Go, Rust, Java, C#, Ruby, and PHP "
+        "structural signature diffing, caller blast-radius scanning, doc drift detection, evidence verification, release notes, and "
+        "breaking change detection) operate deterministically without requiring any LLM. Local Ollama (gemma:latest and qwen2.5-coder:7b) "
+        "is an optional enhancement when use_llm=True is explicitly enabled. All repository operations are strictly read-only."
     ),
 )
 
@@ -97,7 +97,7 @@ def analyze_git_history(
     repo_path: str,
     base_ref: str = "AUTO",
     target_ref: str = "HEAD",
-    max_commits: int = 50,
+    max_commits: int = 100,
     use_llm: bool = DEFAULT_ENABLE_LLM,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
 ) -> dict[str, Any]:
@@ -114,7 +114,7 @@ def analyze_git_history(
             "error_code": "EMPTY_REPO_PATH",
             "error_message": "Parameter 'repo_path' must be a non-empty directory path.",
         }
-    if isinstance(max_commits, bool) or not isinstance(max_commits, int) or max_commits < 1 or max_commits > 200:
+    if isinstance(max_commits, bool) or not isinstance(max_commits, int) or max_commits < 1 or max_commits > 500:
         return {
             "status": "error",
             "repo_path": str(repo_path),
@@ -124,7 +124,7 @@ def analyze_git_history(
             "resolved_target_sha": "",
             "llm_backend_status": "error",
             "error_code": "INVALID_MAX_COMMITS",
-            "error_message": "Parameter 'max_commits' must be an integer between 1 and 200.",
+            "error_message": "Parameter 'max_commits' must be an integer between 1 and 500.",
         }
     try:
         report = run_git_history_analysis(
@@ -284,7 +284,7 @@ def detect_potential_breaking_changes(
 @mcp_app.tool(
     name="analyze_change_graph",
     description=(
-        "MVP Spec alias for analyze_git_history. Analyze Git commit history, AST changes, "
+        "Analyze Git commit history, multi-language AST symbol deltas, "
         "and caller blast radius across revisions base_ref..head_ref."
     ),
     annotations=ToolAnnotations(
@@ -298,7 +298,7 @@ def analyze_change_graph(
     repo_path: str,
     base_ref: str = "AUTO",
     head_ref: str = "HEAD",
-    max_commits: int = 50,
+    max_commits: int = 100,
     use_llm: bool = DEFAULT_ENABLE_LLM,
     ollama_model: str = DEFAULT_OLLAMA_MODEL,
 ) -> dict[str, Any]:
@@ -316,8 +316,8 @@ def analyze_change_graph(
 @mcp_app.tool(
     name="verify_breaking_and_doc_drift",
     description=(
-        "MVP Spec alias for detect_potential_breaking_changes. Verify whether any public API broke "
-        "without Conventional Commit markers, whether callers broke, whether docs drifted, and runtime contract changes."
+        "Verify whether any public API broke without Conventional Commit markers, "
+        "whether callers broke, whether docs drifted, and runtime contract changes across base_ref..head_ref."
     ),
     annotations=ToolAnnotations(
         readOnlyHint=True,
@@ -348,7 +348,7 @@ def verify_breaking_and_doc_drift(
 @mcp_app.tool(
     name="generate_verified_release_brief",
     description=(
-        "MVP Spec alias for generate_release_notes. Render an evidence-anchored release and verification brief "
+        "Render an evidence-anchored release and verification brief "
         "where every finding cites [ev_XXX: file:Lstart-Lend @ sha]."
     ),
     annotations=ToolAnnotations(

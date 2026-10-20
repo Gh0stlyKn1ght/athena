@@ -67,3 +67,9 @@ When contributing changes to `src/athena/`, please preserve Athena's core invari
    - Verification steps and test output.
 
 By contributing to Athena, you agree that your contributions will be licensed under the [Apache-2.0 License](LICENSE).
+
+---
+
+## Maintainer & Owner
+
+- **Aaryan Rawat** — [aaryan28rwt@gmail.com](mailto:aaryan28rwt@gmail.com) ([`@aaryanrwt`](https://github.com/aaryanrwt))
