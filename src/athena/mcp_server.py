@@ -9,6 +9,8 @@ try:
 except ImportError:  # pragma: no cover - fallback for mcp 1.x
     from mcp.server.fastmcp import FastMCP as MCPServer  # type: ignore[no-redef]
 
+from mcp.types import ToolAnnotations
+
 from athena.git_inspector import inspect_repository_state
 from athena.ollama_engine import DEFAULT_ENABLE_LLM, DEFAULT_OLLAMA_BASE_URL, DEFAULT_OLLAMA_MODEL
 from athena.release_notes import (
@@ -35,6 +37,12 @@ mcp_app = MCPServer(
     description=(
         "Inspect a local Git repository safely (read-only). Returns repository validity, empty/shallow status, "
         "current branch, local branches, tags, working-tree status (staged, unstaged, untracked files), and recent commits."
+    ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
     ),
 )
 def inspect_repository(
@@ -77,6 +85,12 @@ def inspect_repository(
         "Analyze Git commit history and code diffs between base_ref (e.g., tag, branch, SHA, or 'AUTO') "
         "and target_ref (e.g., 'HEAD', branch, tag, or 'WORKING_TREE'). Deterministically groups changes into "
         "logical stories with verified evidence records, with optional qwen2.5-coder:7b or gemma:latest semantic synthesis when use_llm=True."
+    ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
     ),
 )
 def analyze_git_history(
@@ -144,6 +158,12 @@ def analyze_git_history(
         "('end_users', 'developers', 'maintainers', 'clients'). Operates deterministically without an LLM, "
         "with optional qwen2.5-coder:7b or gemma:latest enhancement when use_llm=True. Never overwrites files without overwrite=True."
     ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
 )
 def generate_release_notes(
     repo_path: str,
@@ -208,6 +228,12 @@ def generate_release_notes(
         "Uses deterministic AST signature diffing (removed symbols, incompatible parameter changes, return types, "
         "decorators, raised exceptions, base classes, recursive function bugs), downstream caller blast radius, doc drift, and optional LLM review notes."
     ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
 )
 def detect_potential_breaking_changes(
     repo_path: str,
@@ -261,6 +287,12 @@ def detect_potential_breaking_changes(
         "MVP Spec alias for analyze_git_history. Analyze Git commit history, AST changes, "
         "and caller blast radius across revisions base_ref..head_ref."
     ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
 )
 def analyze_change_graph(
     repo_path: str,
@@ -287,6 +319,12 @@ def analyze_change_graph(
         "MVP Spec alias for detect_potential_breaking_changes. Verify whether any public API broke "
         "without Conventional Commit markers, whether callers broke, whether docs drifted, and runtime contract changes."
     ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    ),
 )
 def verify_breaking_and_doc_drift(
     repo_path: str,
@@ -312,6 +350,12 @@ def verify_breaking_and_doc_drift(
     description=(
         "MVP Spec alias for generate_release_notes. Render an evidence-anchored release and verification brief "
         "where every finding cites [ev_XXX: file:Lstart-Lend @ sha]."
+    ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
     ),
 )
 def generate_verified_release_brief(

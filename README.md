@@ -6,6 +6,8 @@
 
 # Athena (`athena-mcp`)
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/aaryanrwt/athena)](https://m8ven.ai/mcp/aaryanrwt/athena?s=readme)
+
 **Local-First, Evidence-Backed Git & AST Release-Readiness and Change-Intelligence MCP Server**
 
 Athena is an open-source, local-first Model Context Protocol (MCP) server and developer CLI that delivers **verifiable, ground-truth code-change intelligence**. By combining deterministic Git diff analysis, Python Abstract Syntax Tree (`ast`) and TypeScript/JavaScript structural signature comparison, downstream caller blast-radius tracing, and documentation-drift detection, Athena eliminates the hallucination and superficiality of conventional AI release-note generators.

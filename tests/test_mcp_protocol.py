@@ -95,6 +95,15 @@ def test_mcp_server_tool_registration_and_unguarded_none_default(mcp_test_repo: 
             "generate_verified_release_brief",
         }.issubset(tool_names)
 
+        # Verify all 7 tools declare explicit boolean MCP ToolAnnotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint)
+        for t in tools:
+            assert t.annotations is not None, f"Tool {t.name} missing annotations"
+            dumped_ann = t.annotations.model_dump(by_alias=True)
+            assert dumped_ann["readOnlyHint"] is True, f"Tool {t.name} missing readOnlyHint=True"
+            assert dumped_ann["destructiveHint"] is False, f"Tool {t.name} missing destructiveHint=False"
+            assert dumped_ann["idempotentHint"] is True, f"Tool {t.name} missing idempotentHint=True"
+            assert dumped_ann["openWorldHint"] is False, f"Tool {t.name} missing openWorldHint=False"
+
         res_brk = await mcp_app.call_tool(
             "detect_potential_breaking_changes",
             {
