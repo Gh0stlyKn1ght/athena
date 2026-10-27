@@ -21,6 +21,13 @@ from athena.release_notes import (
     run_git_history_analysis,
     run_release_notes_generation,
 )
+from athena.security import redact_secrets
+
+
+def _safe_exception_detail(exc: Exception) -> str:
+    """Return an exception summary with credentials removed before MCP serialization."""
+    return redact_secrets(f"{type(exc).__name__}: {exc}")
+
 
 _MCP_INSTRUCTIONS = (
         f"Athena v{__version__} is an offline-capable, local-first multi-language Git intelligence and AST change analysis MCP server. "
@@ -84,7 +91,7 @@ def inspect_repository(
             "repo_path": str(repo_path),
             "is_valid_git_repo": False,
             "error_code": "INTERNAL_INSPECTION_ERROR",
-            "error_message": f"Unexpected error inspecting repository: {type(exc).__name__}: {exc}",
+            "error_message": f"Unexpected error inspecting repository: {_safe_exception_detail(exc)}",
         }
 
 
@@ -156,7 +163,7 @@ def analyze_git_history(
             "resolved_target_sha": "",
             "llm_backend_status": "error",
             "error_code": "INTERNAL_ANALYSIS_ERROR",
-            "error_message": f"Unexpected error during Git history analysis: {type(exc).__name__}: {exc}",
+            "error_message": f"Unexpected error during Git history analysis: {_safe_exception_detail(exc)}",
         }
 
 
@@ -226,7 +233,7 @@ def generate_release_notes(
             "resolved_target_sha": "",
             "llm_backend_status": "error",
             "error_code": "INTERNAL_RELEASE_NOTES_ERROR",
-            "error_message": f"Unexpected error generating release notes: {type(exc).__name__}: {exc}",
+            "error_message": f"Unexpected error generating release notes: {_safe_exception_detail(exc)}",
         }
 
 
@@ -286,7 +293,7 @@ def detect_potential_breaking_changes(
             "resolved_target_sha": "",
             "llm_backend_status": "error",
             "error_code": "INTERNAL_BREAKING_CHANGE_ERROR",
-            "error_message": f"Unexpected error detecting breaking changes: {type(exc).__name__}: {exc}",
+            "error_message": f"Unexpected error detecting breaking changes: {_safe_exception_detail(exc)}",
         }
 
 

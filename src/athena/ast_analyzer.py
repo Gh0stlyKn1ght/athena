@@ -2641,7 +2641,7 @@ def find_affected_callers_in_tree(
                                 resolution_confidence="exact_ast",
                             )
                         )
-        except Exception:
+        except (OSError, RecursionError, SyntaxError, ValueError):
             continue
     return callers
 

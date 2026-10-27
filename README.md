@@ -549,10 +549,10 @@ Athena was rigorously evaluated against a dedicated 19-scenario ground-truth con
 
 ## Running the Automated Test Suite
 
-Athena has **126 tests** covering multi-language structural and recursive diffing, security boundaries, MCP stdio roundtrips, and real-world edge cases. The default offline run executes 125 tests and skips one explicitly opt-in live Ollama integration test:
+Athena has **128 tests** covering multi-language structural and recursive diffing, security boundaries, MCP stdio roundtrips, and real-world edge cases. The default offline run executes 127 tests and skips one explicitly opt-in live Ollama integration test:
 
 ```bash
-# Run the offline suite (125 passed, 1 live Ollama test skipped)
+# Run the offline suite (127 passed, 1 live Ollama test skipped)
 python -m pytest -v
 
 # Optional live Ollama test (Linux/macOS)

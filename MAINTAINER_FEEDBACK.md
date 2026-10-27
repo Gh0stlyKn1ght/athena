@@ -12,10 +12,10 @@ The security and reliability remediation is locally complete and covered by regr
 2. **Batch committed blob reads.** Revision isolation currently favors correctness by reading committed Git objects. Replace repeated `cat-file`/`show` calls with a bounded `git cat-file --batch` reader and cache by `(commit_sha, path)` before running new large-repository benchmarks.
 3. **Define an explicit partial-clone workflow.** Athena now refuses implicit lazy fetching. Document or implement a separately authorized prefetch command for users who intentionally analyze blobless clones. Keep network access opt-in.
 4. **Split large modules.** Move Python AST logic, multi-language parsers, caller scanning, recursion checks, and coverage calculation out of `ast_analyzer.py`. Split security and language regression tests out of `test_real_world_edge_cases.py` at the same time.
-5. **Add verified quality gates.** Ruff, Pyright, package building, coverage thresholds, and dependency auditing were not added as blocking CI jobs because those tools are not installed in the current development environment and their results have not been reviewed. Introduce them one at a time, fix their initial findings, then make them required.
+5. **Continue adding verified quality gates.** Package building, dependency auditing, and CycloneDX SBOM generation are now blocking CI steps, and Bandit reports no unresolved findings after review. Add Ruff, Pyright, and a coverage threshold one at a time, fix their initial findings, then make them required.
 6. **Archive evaluation snapshots clearly.** The files under `tests/evaluation/results` contain historical test counts and benchmark claims. Move them under a versioned documentation path or label every report with the tested commit, date, environment, and schema version.
 7. **Reduce documentation and media weight.** Move the long benchmark tables and defect catalog out of the main README. Consider optimizing the 5 MB showcase GIF and 1.5 MB banner while retaining attribution and source assets.
-8. **Harden repository automation.** Pin GitHub Actions to reviewed commit SHAs, add dependency-update automation, and generate an SBOM during releases.
+8. **Continue hardening repository automation.** GitHub Actions are pinned to reviewed commit SHAs and CI now generates an SBOM. Add dependency-update automation and configure branch protection plus code scanning in the canonical repository settings.
 
 ## Boundaries That Remain
 

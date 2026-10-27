@@ -22,7 +22,9 @@ Athena is designed as a **local-first** MCP server and CLI. Analysis tools are r
 - **No Implicit Git Network Calls**: Git analysis disables lazy object fetching, interactive credential prompts, external diff drivers, and text-conversion helpers. Optional Ollama analysis contacts only the explicitly configured Ollama URL when enabled.
 - **Revision Isolation**: Committed targets are read from their resolved Git object IDs. Filesystem content is used only for an explicit `WORKING_TREE` target.
 - **Complete Output Redaction**: Serialized reports and generated Markdown are recursively redacted, including AST-derived signatures and caller snippets.
+- **Failure-Path Redaction**: MCP and Ollama error details redact provider tokens, authorization values, and credentials embedded in service URLs before serialization.
 - **Safe Explicit Writes**: Release output rejects Git metadata paths, uses exclusive creation by default, and uses atomic replacement for approved overwrites.
+- **Hardened CI Supply Chain**: GitHub Actions are pinned to reviewed commit SHAs. CI audits installed dependencies, builds a wheel, and publishes a CycloneDX SBOM with the package artifacts.
 
 ## Residual Security Boundaries
 
@@ -34,6 +36,13 @@ Athena is designed as a **local-first** MCP server and CLI. Analysis tools are r
 ## Project Credit
 
 Athena was created and is maintained by **Aaryan Rawat** (`aaryan28rwt@gmail.com`). Security fixes and reports should preserve this project attribution.
+
+## Security Audit Credit
+
+The October 2026 adversarial security review and remediation was contributed by
+**[Gh0stlyKn1ght](https://github.com/Gh0stlyKn1ght)**. The review covered Git helper
+execution, revision integrity, credential redaction, safe output handling, MCP
+capability declarations, dependency auditing, SBOM generation, and CI action pinning.
 
 ---
 

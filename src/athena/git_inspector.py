@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import os
 import re
-import subprocess
+# Git is invoked with a fixed executable, shell=False, and validated revisions.
+import subprocess  # nosec B404
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -116,7 +117,8 @@ def run_git_command(
         }
     )
     try:
-        proc = subprocess.run(
+        # User-controlled revisions are validated before reaching this shell-free call.
+        proc = subprocess.run(  # nosec B603
             cmd,
             cwd=str(repo_path),
             shell=False,

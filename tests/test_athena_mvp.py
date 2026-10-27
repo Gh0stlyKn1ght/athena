@@ -281,6 +281,22 @@ def test_8_model_timeout_malformed_json_and_hallucination_stripping(sample_git_r
             assert rep_timeout.llm_backend_status == "fallback_deterministic"
             assert any("timed out" in w or "ReadTimeout" in w for w in rep_timeout.warnings)
 
+        with patch(
+            "athena.ollama_engine.httpx.post",
+            side_effect=RuntimeError(
+                "request to https://athena-user:synthetic-password-123@ollama.internal failed"
+            ),
+        ):
+            rep_credential_error = run_git_history_analysis(
+                repo_path=sample_git_repo,
+                base_ref="v0.1.0",
+                target_ref="v0.2.0",
+                use_llm=True,
+            )
+            warnings = "\n".join(rep_credential_error.warnings)
+            assert "synthetic-password-123" not in warnings
+            assert "[REDACTED_URI_CREDENTIAL]" in warnings
+
         mock_malformed = MagicMock()
         mock_malformed.status_code = 200
         mock_malformed.json.return_value = {"response": "NOT_JSON {{{{ broken output"}

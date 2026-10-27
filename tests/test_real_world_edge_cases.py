@@ -98,6 +98,16 @@ def test_edge_case_secret_redaction_preserves_legitimate_hashes() -> None:
     assert "ghp_" not in redacted, "GitHub PAT was not redacted!"
 
 
+def test_edge_case_secret_redaction_scrubs_uri_userinfo_credentials() -> None:
+    """Credentials embedded in configured service URLs must not survive reports or warnings."""
+    text = "Ollama failed at https://athena-user:synthetic-password-123@ollama.internal/api"
+    redacted = redact_secrets(text)
+    assert "synthetic-password-123" not in redacted
+    assert "athena-user" in redacted
+    assert "ollama.internal" in redacted
+    assert "[REDACTED_URI_CREDENTIAL]" in redacted
+
+
 # =========================================================================
 # EDGE CASE GROUP 2: PYTHON AST ADVANCED SYNTAX
 # =========================================================================
@@ -1033,6 +1043,20 @@ def test_bug_026_mcp_server_error_boundaries_on_adversarial_inputs() -> None:
     res_hist_bool = analyze_git_history(repo_path=".", max_commits=False)  # type: ignore[arg-type]
     assert res_hist_bool["status"] == "error"
     assert res_hist_bool["error_code"] == "INVALID_MAX_COMMITS"
+
+
+def test_mcp_internal_errors_redact_uri_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Unexpected MCP failures must not serialize credentials embedded in exception URLs."""
+    def _raise_credential_error(*args: object, **kwargs: object) -> object:
+        raise RuntimeError(
+            "request to https://athena-user:synthetic-password-123@ollama.internal failed"
+        )
+
+    monkeypatch.setattr("athena.mcp_server.inspect_repository_state", _raise_credential_error)
+    result = inspect_repository(repo_path=".")
+    error_message = result["error_message"]
+    assert "synthetic-password-123" not in error_message
+    assert "[REDACTED_URI_CREDENTIAL]" in error_message
 
 
 def test_bug_028_partial_clone_promisor_detection_and_bounded_diff(tmp_path: Path) -> None:

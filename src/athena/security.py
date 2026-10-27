@@ -38,6 +38,12 @@ WINDOWS_RESERVED_NAMES = {
 # Provider token & secret patterns (incorporating pr-agent#4079 bare token patterns)
 _SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
+        "URI_USERINFO_CREDENTIAL",
+        re.compile(
+            r"(?i)\b(?P<scheme>https?|ftp)://(?P<username>[^\s/@:]+):(?P<password>[^\s/@]+)@"
+        ),
+    ),
+    (
         "AUTHORIZATION_CREDENTIAL",
         re.compile(r"(?i)\b(authorization\s*:\s*(?:bearer|basic)\s+)[^\s,;]+"),
     ),
@@ -256,6 +262,11 @@ def redact_secrets(text: str) -> str:
             redacted = pattern.sub(r"\1 = '[REDACTED_SECRET]'", redacted)
         elif label == "AUTHORIZATION_CREDENTIAL":
             redacted = pattern.sub(r"\1[REDACTED_AUTHORIZATION_CREDENTIAL]", redacted)
+        elif label == "URI_USERINFO_CREDENTIAL":
+            redacted = pattern.sub(
+                r"\g<scheme>://\g<username>:[REDACTED_URI_CREDENTIAL]@",
+                redacted,
+            )
         else:
             redacted = pattern.sub(f"[REDACTED_{label}]", redacted)
 
