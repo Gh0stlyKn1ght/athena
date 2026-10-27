@@ -6,11 +6,14 @@ from typing import Any
 
 try:
     from mcp.server.mcpserver import MCPServer
+    _MCP_SUPPORTS_VERSION = True
 except ImportError:  # pragma: no cover - fallback for mcp 1.x
     from mcp.server.fastmcp import FastMCP as MCPServer  # type: ignore[no-redef]
+    _MCP_SUPPORTS_VERSION = False
 
 from mcp.types import ToolAnnotations
 
+from athena import __version__
 from athena.git_inspector import inspect_repository_state
 from athena.ollama_engine import DEFAULT_ENABLE_LLM, DEFAULT_OLLAMA_BASE_URL, DEFAULT_OLLAMA_MODEL
 from athena.release_notes import (
@@ -19,17 +22,23 @@ from athena.release_notes import (
     run_release_notes_generation,
 )
 
-mcp_app = MCPServer(
-    name="athena-mcp",
-    version="1.1.0",
-    instructions=(
-        "Athena v1.1.0 is an offline-capable, local-first multi-language Git intelligence and AST change analysis MCP server. "
+_MCP_INSTRUCTIONS = (
+        f"Athena v{__version__} is an offline-capable, local-first multi-language Git intelligence and AST change analysis MCP server. "
+        "Athena is created and maintained by Aaryan Rawat. "
         "All core operations (Git diff inspection, Python AST analysis, TypeScript/JS, C/C++, Go, Rust, Java, C#, Ruby, and PHP "
         "structural signature diffing, caller blast-radius scanning, doc drift detection, evidence verification, release notes, and "
         "breaking change detection) operate deterministically without requiring any LLM. Local Ollama (gemma:latest and qwen2.5-coder:7b) "
-        "is an optional enhancement when use_llm=True is explicitly enabled. All repository operations are strictly read-only."
-    ),
+        "is an optional enhancement when use_llm=True is explicitly enabled. Analysis operations are read-only; release tools write "
+        "only when an output_file is explicitly supplied."
 )
+
+# MCP 1.x FastMCP does not accept the 2.x `version` constructor argument.
+# Keep the supported 1.x fallback usable while retaining explicit version metadata
+# on MCP 2.x servers.
+if _MCP_SUPPORTS_VERSION:
+    mcp_app = MCPServer(name="athena-mcp", version=__version__, instructions=_MCP_INSTRUCTIONS)
+else:  # pragma: no cover - exercised in the MCP 1.x compatibility environment
+    mcp_app = MCPServer(name="athena-mcp", instructions=_MCP_INSTRUCTIONS)
 
 
 @mcp_app.tool(
@@ -90,7 +99,7 @@ def inspect_repository(
         readOnlyHint=True,
         destructiveHint=False,
         idempotentHint=True,
-        openWorldHint=False,
+        openWorldHint=True,
     ),
 )
 def analyze_git_history(
@@ -159,10 +168,10 @@ def analyze_git_history(
         "with optional qwen2.5-coder:7b or gemma:latest enhancement when use_llm=True. Never overwrites files without overwrite=True."
     ),
     annotations=ToolAnnotations(
-        readOnlyHint=True,
-        destructiveHint=False,
-        idempotentHint=True,
-        openWorldHint=False,
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=True,
     ),
 )
 def generate_release_notes(
@@ -232,7 +241,7 @@ def generate_release_notes(
         readOnlyHint=True,
         destructiveHint=False,
         idempotentHint=True,
-        openWorldHint=False,
+        openWorldHint=True,
     ),
 )
 def detect_potential_breaking_changes(
@@ -291,7 +300,7 @@ def detect_potential_breaking_changes(
         readOnlyHint=True,
         destructiveHint=False,
         idempotentHint=True,
-        openWorldHint=False,
+        openWorldHint=True,
     ),
 )
 def analyze_change_graph(
@@ -323,7 +332,7 @@ def analyze_change_graph(
         readOnlyHint=True,
         destructiveHint=False,
         idempotentHint=True,
-        openWorldHint=False,
+        openWorldHint=True,
     ),
 )
 def verify_breaking_and_doc_drift(
@@ -352,10 +361,10 @@ def verify_breaking_and_doc_drift(
         "where every finding cites [ev_XXX: file:Lstart-Lend @ sha]."
     ),
     annotations=ToolAnnotations(
-        readOnlyHint=True,
-        destructiveHint=False,
-        idempotentHint=True,
-        openWorldHint=False,
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=True,
     ),
 )
 def generate_verified_release_brief(

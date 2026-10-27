@@ -5,7 +5,10 @@ Tests boundary conditions, adversarial inputs, syntax variations, and complex re
 from __future__ import annotations
 
 import ast
+import json
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -1371,5 +1374,141 @@ def test_bug_035_and_bug_037_multilang_recursive_function_detection_and_delegate
     assert is_rec is True
     assert len(errs) == 1 and "requires at least 3" in errs[0]
     assert count_recursive_functions_in_source(php_delegated, "src/Utils.php") >= 1
+
+
+# =========================================================================
+# SECURITY AND REVISION-INTEGRITY REGRESSIONS
+# =========================================================================
+
+def _make_security_regression_repo(tmp_path: Path) -> tuple[Path, str, str]:
+    repo = tmp_path / "security_regression_repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Aaryan Rawat Security Test")
+    _git(repo, "config", "user.email", "security-test@example.com")
+    (repo / "api.py").write_text("def public_api(x):\n    return x\n", encoding="utf-8")
+    (repo / "caller.py").write_text(
+        "from api import public_api\npublic_api(1)\n", encoding="utf-8"
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat: initial API")
+    base = _git(repo, "rev-parse", "HEAD").stdout.strip()
+
+    (repo / "api.py").write_text("def public_api(x, y):\n    return x + y\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "feat!: require y")
+    head = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    return repo, base, head
+
+
+def test_security_git_textconv_helpers_are_never_executed(tmp_path: Path) -> None:
+    repo, base, head = _make_security_regression_repo(tmp_path)
+    marker = repo / "TEXTCONV_EXECUTED"
+    helper = repo / "textconv_helper.py"
+    helper.write_text(
+        "from pathlib import Path\nimport sys\n"
+        f"Path({str(marker)!r}).write_text('executed', encoding='utf-8')\n"
+        "print(Path(sys.argv[1]).read_text(encoding='utf-8'))\n",
+        encoding="utf-8",
+    )
+    (repo / ".gitattributes").write_text("api.py diff=athena_security_test\n", encoding="utf-8")
+    _git(repo, "config", "diff.athena_security_test.textconv", f'"{sys.executable}" "{helper}"')
+
+    report = run_breaking_change_detection(repo, base_ref=base, target_ref=head, use_llm=False)
+    assert report.status == "ok"
+    assert not marker.exists(), "Git textconv helper executed during static analysis"
+
+
+def test_security_reports_and_markdown_redact_all_nested_credentials(tmp_path: Path) -> None:
+    repo, base, _ = _make_security_regression_repo(tmp_path)
+    token = "ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
+    bearer = "Authorization: Bearer synthetic_audit_credential_1234567890"
+    (repo / "api.py").write_text(
+        f'def public_api(x, token="{token}"):\n    header = "{bearer}"\n    return x\n',
+        encoding="utf-8",
+    )
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "test: synthetic credential fixtures")
+    target = _git(repo, "rev-parse", "HEAD").stdout.strip()
+
+    report = run_breaking_change_detection(repo, base_ref=base, target_ref=target, use_llm=False)
+    serialized = json.dumps(report.model_dump(mode="json"))
+    assert token not in serialized
+    assert "synthetic_audit_credential_1234567890" not in serialized
+
+    output = "release.md"
+    release = run_release_notes_generation(
+        repo, base_ref=base, target_ref=target, output_file=output, use_llm=False
+    )
+    assert release.status == "ok"
+    written = (repo / output).read_text(encoding="utf-8")
+    assert token not in written
+    assert "synthetic_audit_credential_1234567890" not in written
+
+
+def test_revision_consistency_ignores_dirty_and_newer_working_tree_files(tmp_path: Path) -> None:
+    repo, base, head = _make_security_regression_repo(tmp_path)
+    # Dirty files deliberately contradict the committed target.
+    (repo / "api.py").write_text("def public_api(x):\n    return x\n", encoding="utf-8")
+    (repo / "caller.py").write_text(
+        "from api import public_api\npublic_api(1, 2)\n", encoding="utf-8"
+    )
+
+    report = run_breaking_change_detection(repo, base_ref=base, target_ref="HEAD", use_llm=False)
+    assert report.resolved_target_sha == head
+    finding = next(f for f in report.potential_breaking_changes if f.affected_symbol == "public_api")
+    assert finding.new_signature == "def public_api(x, y)"
+    assert any(c.arity_mismatch_detected for c in finding.affected_callers)
+    assert any(c.call_snippet == "public_api(1)" for c in finding.affected_callers)
+
+
+def test_required_git_diff_failure_returns_structured_error(tmp_path: Path) -> None:
+    repo, base, head = _make_security_regression_repo(tmp_path)
+    _git(repo, "config", "diff.renames", "invalid-value")
+    report = run_breaking_change_detection(repo, base_ref=base, target_ref=head, use_llm=False)
+    assert report.status == "error"
+    assert report.error_code in {"GIT_COMMAND_FAILED", "GIT_HISTORY_EXTRACTION_FAILED"}
+    assert report.total_potential_breaking_changes == 0
+
+
+def test_release_output_blocks_metadata_races_and_hardlink_mutation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import athena.release_notes as release_module
+
+    repo, base, head = _make_security_regression_repo(tmp_path)
+    blocked = run_release_notes_generation(
+        repo, base_ref=base, target_ref=head, output_file=".git/AUDIT_MARKER", use_llm=False
+    )
+    assert blocked.status == "error"
+    assert blocked.error_code == "GIT_METADATA_WRITE_BLOCKED"
+
+    race_target = repo / "race.md"
+    original_analyze = release_module.analyze_changes_with_ollama
+
+    def create_race_file(*args: object, **kwargs: object):
+        race_target.write_text("created after validation", encoding="utf-8")
+        return original_analyze(*args, **kwargs)
+
+    monkeypatch.setattr(release_module, "analyze_changes_with_ollama", create_race_file)
+    raced = run_release_notes_generation(
+        repo, base_ref=base, target_ref=head, output_file="race.md", overwrite=False, use_llm=False
+    )
+    assert raced.status == "error"
+    assert raced.error_code == "FILE_EXISTS_OVERWRITE_DENIED"
+    assert race_target.read_text(encoding="utf-8") == "created after validation"
+
+    monkeypatch.setattr(release_module, "analyze_changes_with_ollama", original_analyze)
+    outside = tmp_path / "outside.md"
+    outside.write_text("outside remains intact", encoding="utf-8")
+    linked = repo / "linked.md"
+    try:
+        os.link(outside, linked)
+    except OSError:
+        pytest.skip("Hard links are unavailable on this filesystem")
+    overwritten = run_release_notes_generation(
+        repo, base_ref=base, target_ref=head, output_file="linked.md", overwrite=True, use_llm=False
+    )
+    assert overwritten.status == "ok"
+    assert outside.read_text(encoding="utf-8") == "outside remains intact"
+    assert linked.read_text(encoding="utf-8") != "outside remains intact"
 
 

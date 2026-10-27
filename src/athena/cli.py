@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 
+from athena import __version__
 from athena.mcp_server import (
     analyze_git_history,
     detect_potential_breaking_changes,
@@ -29,9 +30,9 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(
         prog="athena",
-        description="Athena v1.1.0: Local-First Multi-Language Git & AST Release-Readiness and Change-Intelligence Engine",
+        description=f"Athena v{__version__}: Local-First Multi-Language Git & AST Release-Readiness and Change-Intelligence Engine",
     )
-    parser.add_argument("--version", action="version", version="athena 1.1.0")
+    parser.add_argument("--version", action="version", version=f"athena {__version__}")
     sub = parser.add_subparsers(dest="command")
 
     # mcp server command (default if no subcommand or 'mcp')
